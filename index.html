@@ -840,25 +840,52 @@ n.innerHTML = 'Gagal memuat katalog dari server. Periksa koneksimu, lalu <button
 const b = $("#cat-retry");
 if (b) b.addEventListener("click", () => loadServerCatalog(0));
 }
+function applyCatalog(d) {
+if (!d || !Array.isArray(d.catalog)) return false;
+CATALOG = d.catalog;
+catalogReady = true;
+setCatNote("ok");
+fillFilters();
+renderHome();
+route();
+return true;
+}
+function fetchCatalogOnce() {
+return new Promise((resolve, reject) => {
+let done = false;
+const ok = (v) => { if (!done) { done = true; resolve(v); } };
+const bad = (e) => { if (!done) { done = true; reject(e); } };
+const viaXhr = () => {
+try {
+const x = new XMLHttpRequest();
+x.open("GET", "/api/catalog", true);
+x.timeout = 12000;
+x.onload = () => { try { ok(JSON.parse(x.responseText)); } catch (e) { bad(e); } };
+x.onerror = () => bad(new Error("xhr-error"));
+x.ontimeout = () => bad(new Error("xhr-timeout"));
+x.send();
+} catch (e) { bad(e); }
+};
+if (!window.fetch) { viaXhr(); return; }
+let ctrl = null;
+try { ctrl = window.AbortController ? new AbortController() : null; } catch (e) { ctrl = null; }
+const timer = setTimeout(() => { if (ctrl) { try { ctrl.abort(); } catch (e) {} } }, 12000);
+fetch("/api/catalog", { cache: "no-store", signal: ctrl ? ctrl.signal : undefined })
+  .then((r) => r.json())
+  .then((d) => { clearTimeout(timer); ok(d); })
+  .catch(() => { clearTimeout(timer); viaXhr(); });
+});
+}
 function loadServerCatalog(attempt) {
 if (!catalogReady) setCatNote("loading");
-fetch("/api/catalog", { cache: "no-store" })
-  .then((r) => r.json())
-  .then((d) => {
-    if (d && Array.isArray(d.catalog)) {
-      CATALOG = d.catalog;
-      catalogReady = true;
-      setCatNote("ok");
-      fillFilters();
-      renderHome();
-      route();
-    } else if (attempt < 1) { setTimeout(() => loadServerCatalog(attempt + 1), 1200); }
-    else setCatNote("error");
-  })
-  .catch(() => {
-    if (attempt < 1) { setTimeout(() => loadServerCatalog(attempt + 1), 1200); }
-    else setCatNote("error");
-  });
+fetchCatalogOnce()
+  .then((d) => { if (!applyCatalog(d)) scheduleCatalogRetry(attempt); })
+  .catch(() => scheduleCatalogRetry(attempt));
+}
+function scheduleCatalogRetry(attempt) {
+const delays = [800, 1600, 3200, 6400];
+if (attempt < delays.length) setTimeout(() => loadServerCatalog(attempt + 1), delays[attempt]);
+else setCatNote("error");
 }
 loadServerCatalog(0);
 </script>
