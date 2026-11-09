@@ -190,6 +190,9 @@ function fixTitleShape(a) {
   if (!Array.isArray(a.episodes)) a.episodes = [];
   if (!Array.isArray(a.genre)) a.genre = a.genre ? [a.genre] : [];
   if (typeof a.rating !== "number") a.rating = 0;
+  a.episodes.forEach((ep) => {
+    if (ep && typeof ep === "object" && !Array.isArray(ep.servers)) ep.servers = [];
+  });
   return a;
 }
 function fixCatalogShape(list) {
@@ -274,6 +277,16 @@ function validateCatalog(input) {
       seenN.add(n);
       const epDate = str(ep.date, 10).trim();
       if (epDate && !isDateStr(epDate)) return { error: title + " episode " + n + ": tanggal harus format YYYY-MM-DD atau kosong." };
+      let servers = [];
+      if (ep.servers != null) {
+        if (!Array.isArray(ep.servers)) return { error: title + " episode " + n + ": servers harus berupa array." };
+        for (const sRaw of ep.servers.slice(0, 12)) {
+          const s = sRaw || {};
+          const sUrl = str(s.url, 5000).trim();
+          if (!sUrl) continue;
+          servers.push({ name: str(s.name, 80).trim(), url: sUrl });
+        }
+      }
       episodes.push({
         n,
         title: str(ep.title, 500),
@@ -281,6 +294,7 @@ function validateCatalog(input) {
         src: str(ep.src, 5000).trim(),
         srcDrive: str(ep.srcDrive, 5000).trim(),
         srcMega: str(ep.srcMega, 5000).trim(),
+        servers,
       });
     }
     episodes.sort((x, y) => x.n - y.n);
