@@ -242,19 +242,7 @@ color: #cfd4dc; background: #14161a;
 .player-empty p { margin: 0; max-width: 52ch; font-size: 14px;}
 .watch h2 { font-size: 22px; margin: 16px 0 2px;}
 .watch .w-sub { color: var(--muted); margin: 0 0 14px; font-family: var(--mono); font-size: 13px;}
-.srcbox {
-background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px;
-margin-bottom: 18px;
-}
-.srcbox label { font-weight: 700; font-size: 14px; display: block; margin-bottom: 6px;}
-.srcbox .hint { color: var(--muted); font-size: 13px; margin: 6px 0 0;}
-.srcbox .row { display: flex; gap: 8px; flex-wrap: wrap;}
-.srcbox input { flex: 1 1 260px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit;}
-.srcbox .play {
-background: var(--accent); color: var(--accent-ink); border: none; border-radius: 8px;
-padding: 10px 18px; font-weight: 700;
-}
-.srcbox .err { color: var(--accent); font-size: 13px; margin: 8px 0 0; display: none;}
+.err { color: var(--accent); font-size: 13px; margin: 8px 0 18px; display: none;}
 .navrow { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 20px;}
 .navrow button {
 border: 1px solid var(--line); background: var(--surface); color: var(--ink);
@@ -736,13 +724,19 @@ if (v) { v.pause(); v.removeAttribute("src"); v.load();}
 }
 
 function isEmbedUrl(u) {
-return /(youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com|drive\.google\.com)/i.test(u) &&!/\.(mp4|webm|m3u8)(\?|#|$)/i.test(u);
+return /(youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com|drive\.google\.com|mega\.nz|mega\.co\.nz)/i.test(u) &&!/\.(mp4|webm|m3u8)(\?|#|$)/i.test(u);
 }
 function embedUrl(u) {
 let m = u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/);
 if (m) return "https://www.youtube.com/embed/" + m[1];
 m = u.match(/vimeo\.com\/(\d+)/);
 if (m) return "https://player.vimeo.com/video/" + m[1];
+m = u.match(/(?:drive|docs)\.google\.com\/file\/d\/([\w-]+)/);
+if (m) return "https://drive.google.com/file/d/" + m[1] + "/preview";
+m = u.match(/drive\.google\.com\/(?:open|uc)\?[^#]*\bid=([\w-]+)/);
+if (m) return "https://drive.google.com/file/d/" + m[1] + "/preview";
+m = u.match(/(?:mega\.nz|mega\.co\.nz)\/(?:file|embed)\/([\w-]+)#([\w-]+)/);
+if (m) return "https://mega.nz/embed/" + m[1] + "#" + m[2];
 return u;
 }
 
@@ -753,7 +747,7 @@ const clean = (url || "").trim();
 if (!clean) {
 stage.innerHTML = '<div class="player-empty"><span class="pe-file">' + esc($("#stage").dataset.file || "") + '</span>' +
 "<p><b>Belum ada sumber video untuk episode ini.</b></p>" +
-"<p>Tempel link MP4, HLS (.m3u8), atau embed milikmu pada kotak di bawah player, atau isi kolom <span style='font-family:var(--mono)'>src</span> episode ini di data katalog.</p></div>";
+"<p>Link video untuk episode ini diisi oleh admin lewat Panel Admin.</p></div>";
 return;
 }
 if (isEmbedUrl(clean)) {
@@ -796,13 +790,7 @@ view.innerHTML =
 '<div class="player-shell"><div class="ratio" id="stage" data-file="' + esc(fname) + '"></div></div>' +
 "<h2>" + esc(a.title) + " — Episode " + ep.n + "</h2>" +
 '<p class="w-sub">' + esc(fname) + " · rilis " + fmtDate(ep.date) + " · " + esc(ep.title) + "</p>" +
-'<div class="srcbox">' +
-'<label for="src-input">Sumber video</label>' +
-'<div class="row"><input id="src-input" type="url" placeholder="https://…/video.mp4 · …/stream.m3u8 · link YouTube/Vimeo" value="' + esc(ep.src || "") + '" />' +
-'<button class="play" id="src-play">Putar</button></div>' +
 '<p class="err" id="src-err"></p>' +
-'<p class="hint">Player mendukung MP4 / WebM langsung, HLS (.m3u8), dan embed YouTube/Vimeo. Link yang ditempel hanya dipakai di sesi ini dan tidak tersimpan.</p>' +
-"</div>" +
 '<div class="navrow">' +
 (prev? '<button data-watch="' + a.slug + "/" + prev.n + '">← Episode ' + prev.n + "</button>": '<button disabled>← Episode sebelumnya</button>') +
 (next? '<button data-watch="' + a.slug + "/" + next.n + '">Episode ' + next.n + " →</button>": '<button disabled>Episode berikutnya →</button>') +
@@ -818,11 +806,6 @@ view.innerHTML =
 "</button></li>").join("") + "</ul>" +
 "</div>";
 loadSource(ep.src || "");
-$("#src-play").addEventListener("click", () => {
-$("#src-err").style.display = "none";
-loadSource($("#src-input").value);
-});
-$("#src-input").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#src-play").click();});
 }
 
 /* ---------------- router ---------------- */

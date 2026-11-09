@@ -128,7 +128,7 @@
         <textarea id="f-synopsis" placeholder="Sinopsis singkat anime"></textarea>
 
         <h3 style="margin:22px 0 4px">Episode</h3>
-        <p class="note">Panel ini mengelola <b>link</b> video saja — file videonya sendiri di-host di tempat lain, bukan di-upload ke sini. Link boleh MP4, .m3u8 (HLS), YouTube, atau Vimeo; kosongkan bila belum ada.</p>
+        <p class="note">Panel ini mengelola <b>link</b> video saja — file videonya sendiri tidak di-upload ke sini. Untuk menambah video: upload dulu file videonya ke <b>Google Drive</b> atau <b>MEGA</b>. Khusus Google Drive, atur dulu berbaginya menjadi <b>"Siapa saja yang memiliki link"</b> (Anyone with the link) agar bisa diputar oleh pengunjung, lalu salin link berbaginya dan tempel ke kolom <b>Link Video</b> episode yang bersangkutan — player akan mengubahnya menjadi embed secara otomatis. Link yang didukung: Google Drive, MEGA, MP4, .m3u8 (HLS), YouTube, atau Vimeo; kosongkan bila belum ada.</p>
         <table>
           <thead><tr><th style="width:64px">Nomor</th><th>Judul Episode</th><th style="width:140px">Tanggal</th><th>Link Video (src)</th><th style="width:70px">Aksi</th></tr></thead>
           <tbody id="ep-body"></tbody>
@@ -330,7 +330,7 @@ function renderEpisodes(){
       '<td><input type="number" min="1" step="1" class="ep-n" value="'+esc(ep.n)+'"></td>'+
       '<td><input type="text" class="ep-title" value="'+esc(ep.title||"")+'" placeholder="Judul episode"></td>'+
       '<td><input type="date" class="ep-date" value="'+esc(ep.date||"")+'"></td>'+
-      '<td><input type="text" class="ep-src" value="'+esc(ep.src||"")+'" placeholder="MP4 / .m3u8 / YouTube / Vimeo, atau kosong"></td>'+
+      '<td><input type="text" class="ep-src" value="'+esc(ep.src||"")+'" placeholder="Link Drive / MEGA / MP4 / .m3u8 / YouTube, atau kosong"></td>'+
       '<td><button type="button" class="danger ep-del">Hapus</button></td>';
     tr.querySelector(".ep-del").addEventListener("click", function(){
       collectForm();
