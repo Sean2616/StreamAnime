@@ -182,11 +182,24 @@ function loadSeed() {
   return null;
 }
 /* Ambil katalog efektif: dari Firebase; bila Firebase kosong -> seed otomatis. */
+/* Firebase RTDB tidak menyimpan array kosong: judul tanpa episode
+   kembali dari GET tanpa kunci "episodes" sama sekali. Normalisasi
+   bentuk judul di sini agar setiap konsumen API menerima bentuk utuh. */
+function fixTitleShape(a) {
+  if (!a || typeof a !== "object") a = {};
+  if (!Array.isArray(a.episodes)) a.episodes = [];
+  if (!Array.isArray(a.genre)) a.genre = a.genre ? [a.genre] : [];
+  if (typeof a.rating !== "number") a.rating = 0;
+  return a;
+}
+function fixCatalogShape(list) {
+  return Array.isArray(list) ? list.map(fixTitleShape) : list;
+}
 async function getCatalogData() {
   if (!firebaseConfigured()) return { catalog: null, updatedAt: null, source: "unconfigured" };
   const data = await firebaseGet();
   if (data && Array.isArray(data.catalog) && data.catalog.length) {
-    return { catalog: data.catalog, updatedAt: data.updatedAt || null, source: "firebase" };
+    return { catalog: fixCatalogShape(data.catalog), updatedAt: data.updatedAt || null, source: "firebase" };
   }
   // Firebase belum punya data -> seed dari api/_seed.js
   const seed = loadSeed();
@@ -385,6 +398,8 @@ module.exports = {
   // diekspor juga untuk test / pemakaian ulang
   validateCatalog,
   slugify,
+  fixTitleShape,
+  fixCatalogShape,
   getCatalogData,
   firebaseConfigured,
   _internals: { signToken, verifyToken, isAuthed, readJsonBody, loadSeed },

@@ -848,9 +848,24 @@ if (lastCatError) { const dv = document.createElement("div"); dv.style.cssText =
 const b = $("#cat-retry");
 if (b) b.addEventListener("click", () => loadServerCatalog(0));
 }
+function normalizeTitle(a) {
+/* Firebase RTDB tidak menyimpan array kosong: judul tanpa episode
+   tiba tanpa kunci "episodes" - lengkapi bentuknya sebelum dipakai. */
+if (!a || typeof a !== "object") a = {};
+if (!Array.isArray(a.episodes)) a.episodes = [];
+if (!Array.isArray(a.genre)) a.genre = a.genre ? [a.genre] : [];
+if (typeof a.rating !== "number") a.rating = 0;
+a.episodes.forEach((ep) => {
+if (!ep || typeof ep !== "object") return;
+if (typeof ep.src !== "string") ep.src = "";
+if (typeof ep.srcDrive !== "string") ep.srcDrive = "";
+if (typeof ep.srcMega !== "string") ep.srcMega = "";
+});
+return a;
+}
 function applyCatalog(d) {
 if (!d || !Array.isArray(d.catalog)) return false;
-CATALOG = d.catalog;
+CATALOG = d.catalog.map(normalizeTitle);
 catalogReady = true;
 setCatNote("ok");
 fillFilters();
