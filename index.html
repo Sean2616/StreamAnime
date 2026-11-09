@@ -525,7 +525,7 @@ view.innerHTML =
 '<li><button data-watch="' + a.slug + "/" + ep.n + '">' +
 '<span class="e-file">' + esc(fileName(a, ep)) + "</span>" +
 '<span class="e-title">Episode ' + ep.n + " — " + esc(ep.title) + "</span>" +
-(epSources(ep).length ? '<span class="e-srv">' + esc(epSources(ep).filter((s) => s.key !== "driveDirect").map((s) => s.label).join(" · ")) + "</span>" : "") +
+(epSources(ep).length ? '<span class="e-srv">' + esc(epSources(ep).map((s) => s.label).join(" · ")) + "</span>" : "") +
 '<span class="e-date">' + fmtDate(ep.date) + "</span>" +
 "</button></li>").join("") + "</ul>"
 : '<div class="empty">Tidak ada episode yang cocok dengan pencarian.</div>');
@@ -545,7 +545,7 @@ if (v) { v.pause(); v.removeAttribute("src"); v.load();}
 
 function isEmbedUrl(u) {
 if (/\.(mp4|webm|m3u8)(\?|#|$)/i.test(u)) return false;
-if (/(youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com|drive\.google\.com|mega\.nz|mega\.co\.nz)/i.test(u)) return true;
+if (/(youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com|mega\.nz|mega\.co\.nz)/i.test(u)) return true;
 if (/(vidhide|streamhg|hgcloud|smoothpre|earnvids|filemoon|byse|voe\.|streamtape|dood|mixdrop|vidmoly|filelion|streamwish|uqload|lulustream|vidoza|abyss|sendvid|upstream)/i.test(u)) return true;
 if (/\/(e|embed)\/[\w-]+/i.test(u) || /\/embed-[\w-]+\.html/i.test(u) || /\/v\/[\w-]+\.html/i.test(u)) return true;
 if (/\/file\/[\w-]+\/?($|[?#])/i.test(u)) return true;
@@ -556,10 +556,6 @@ let m = u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/);
 if (m) return "https://www.youtube.com/embed/" + m[1];
 m = u.match(/vimeo\.com\/(\d+)/);
 if (m) return "https://player.vimeo.com/video/" + m[1];
-m = u.match(/(?:drive|docs)\.google\.com\/file\/d\/([\w-]+)/);
-if (m) return "https://drive.google.com/file/d/" + m[1] + "/preview";
-m = u.match(/drive\.google\.com\/(?:open|uc)\?[^#]*\bid=([\w-]+)/);
-if (m) return "https://drive.google.com/file/d/" + m[1] + "/preview";
 m = u.match(/(?:mega\.nz|mega\.co\.nz)\/(?:file|embed)\/([\w-]+)#([\w-]+)/);
 if (m) return "https://mega.nz/embed/" + m[1] + "#" + m[2];
 if (/(filemoon|byse)/i.test(u)) return u.replace(/\/d\//, "/e/");
@@ -572,7 +568,6 @@ return u;
 }
 
 function serverLabel(u) {
-if (/drive\.google\.com|docs\.google\.com/i.test(u)) return "Google Drive";
 if (/mega\.nz|mega\.co\.nz/i.test(u)) return "MEGA";
 if (/youtube\.com|youtu\.be/i.test(u)) return "YouTube";
 if (/vimeo\.com/i.test(u)) return "Vimeo";
@@ -591,38 +586,26 @@ return "Embed";
 }
 return "Server Utama";
 }
-function driveStreamUrl(u) {
-const id = driveId(u || "");
-return id ? "https://drive.usercontent.google.com/download?id=" + id + "&export=download&confirm=t" : "";
-}
-
 function epSources(ep) {
+/* Streaming: Drive TIDAK lagi jadi sumber putar. srcDrive hanya untuk Download. */
 const out = [];
 const seen = {};
-const push = (key, label, url, play) => { const u = (url || "").trim(); if (u && !seen[u]) { seen[u] = 1; out.push({ key, label, url: u, play: play || u }); } };
-const pushDrivePair = (key, label, url) => {
-const u = (url || "").trim();
-push(key, label, u);
-const direct = driveStreamUrl(u);
-if (direct) { const e = { key: "driveDirect", label: "Drive Langsung", url: u, play: direct }; if (!out.some((x) => x.key === "driveDirect")) out.push(e); }
-};
-pushDrivePair("drive", "Google Drive", ep.srcDrive);
+const push = (key, label, url, play) => { const u = (url || "").trim(); if (u && !seen[u] && !driveId(u)) { seen[u] = 1; out.push({ key, label, url: u, play: play || u }); } };
 push("mega", "MEGA", ep.srcMega);
 const mainUrl = (ep.src || "").trim();
-if (driveId(mainUrl)) pushDrivePair("main", serverLabel(mainUrl), mainUrl);
-else push("main", serverLabel(mainUrl), mainUrl);
-(ep.servers || []).forEach((s, i) => {
-const u = (s.url || "").trim();
+push("main", serverLabel(mainUrl), mainUrl);
+(ep.servers || []).forEach((srv, i) => {
+const u = (srv.url || "").trim();
 if (!u) return;
-const label = (s.name || "").trim() || serverLabel(u);
-if (driveId(u)) pushDrivePair("custom" + i, label, u);
-else push("custom" + i, label, u);
+const label = (srv.name || "").trim() || serverLabel(u);
+push("custom" + i, label, u);
 });
 return out;
 }
-function isMobileDevice() {
-try { if (window.matchMedia && window.matchMedia("(max-width: 820px)").matches) return true; } catch (e) {}
-return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+function epDownloads(ep) {
+/* Download HANYA dari Google Drive (kolom srcDrive di admin). */
+const url = downloadUrl((ep && ep.srcDrive) || "");
+return url ? [{ label: "Google Drive", url }] : [];
 }
 function driveId(u) {
 let m = u.match(/(?:drive|docs)\.google\.com\/file\/d\/([\w-]+)/);
@@ -634,11 +617,6 @@ return null;
 function downloadUrl(u) {
 const id = driveId(u);
 if (id) return "https://drive.google.com/uc?export=download&id=" + id;
-const m = u.match(/(?:mega\.nz|mega\.co\.nz)\/(?:file|embed)\/([\w-]+)#([\w-]+)/);
-if (m) return "https://mega.nz/file/" + m[1] + "#" + m[2];
-if (/mega\.nz|mega\.co\.nz/i.test(u)) return u;
-if (isEmbedUrl(u)) return "";
-if (/\.(mp4|webm|mkv)(\?|#|$)/i.test(u)) return u;
 return "";
 }
 
@@ -697,10 +675,8 @@ const idx = a.episodes.indexOf(ep);
 const prev = a.episodes[idx - 1], next = a.episodes[idx + 1];
 const fname = fileName(a, ep);
 const sources = epSources(ep);
-const seenDl = {};
-const dls = sources.map((s) => ({ label: s.label, url: downloadUrl(s.url) })).filter((d) => d.url && !seenDl[d.url] && (seenDl[d.url] = 1));
+const dls = epDownloads(ep);
 let defIdx = 0;
-{ const di = sources.findIndex((s) => s.key === "driveDirect"); if (di > 0) defIdx = di; }
 view.innerHTML =
 '<p style="margin-top:18px"><a class="backlink" href="#/anime/' + a.slug + '">←../' + esc(a.slug) + '/</a></p>' +
 '<div class="watch">' +
@@ -726,7 +702,7 @@ view.innerHTML =
 '<li><button data-watch="' + a.slug + "/" + e.n + '"' + (e.n === ep.n? ' style="background:var(--accent-soft)"': "") + ">" +
 '<span class="e-file">' + esc(fileName(a, e)) + "</span>" +
 '<span class="e-title">Episode ' + e.n + " — " + esc(e.title) + (e.n === ep.n? " · sedang diputar": "") + "</span>" +
-(epSources(e).length ? '<span class="e-srv">' + esc(epSources(e).filter((s) => s.key !== "driveDirect").map((s) => s.label).join(" · ")) + "</span>" : "") +
+(epSources(e).length ? '<span class="e-srv">' + esc(epSources(e).map((s) => s.label).join(" · ")) + "</span>" : "") +
 '<span class="e-date">' + fmtDate(e.date) + "</span>" +
 "</button></li>").join("") + "</ul>" +
 "</div>";
@@ -734,29 +710,8 @@ let curSrv = defIdx;
 let autoFellBack = false;
 const srvRow = $("#srv-row");
 const setActiveBtn = () => { if (srvRow) srvRow.querySelectorAll("button").forEach((x, xi) => x.classList.toggle("active", xi === curSrv)); };
-const updateHint = () => {
-const h = $("#srv-hint");
-if (!h) return;
-const cur = sources[curSrv];
-const showHint = isMobileDevice() && cur && cur.key === "drive";
-h.hidden = !showHint;
-if (showHint) h.textContent = "Kamu memakai server Google Drive (tampilan embed). Di HP, server Drive Langsung biasanya tampil lebih pas di layar.";
-};
-videoErrorHook = () => {
-const cur = sources[curSrv];
-if (!cur || cur.key !== "driveDirect") return false;
-if (autoFellBack) return false;
-const embIdx = sources.findIndex((s) => s.key === "drive" || (s.key === "main" && driveId(s.url)));
-if (embIdx < 0) return false;
-autoFellBack = true;
-curSrv = embIdx;
-setActiveBtn();
-loadSource(sources[embIdx].play || sources[embIdx].url);
-const e2 = $("#src-err");
-if (e2) { e2.style.display = "block"; e2.textContent = "Drive Langsung tidak bisa memutar file ini di perangkatmu — otomatis dialihkan ke server Google Drive."; }
-updateHint();
-return true;
-};
+const updateHint = () => { const h = $("#srv-hint"); if (h) h.hidden = true; };
+videoErrorHook = null;
 if (srvRow) {
 srvRow.addEventListener("click", (ev) => {
 const b = ev.target.closest("[data-srv]");
@@ -771,6 +726,7 @@ updateHint();
 }
 loadSource(sources.length ? (sources[defIdx].play || sources[defIdx].url) : "");
 updateHint();
+if (!sources.length && dls.length) { const e2 = $("#src-err"); if (e2) { e2.style.display = "block"; e2.textContent = "Episode ini hanya tersedia untuk diunduh — gunakan tombol DOWNLOAD (Google Drive) di halaman ini."; } }
 }
 
 /* ---------------- router ---------------- */
