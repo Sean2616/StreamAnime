@@ -228,6 +228,7 @@ padding: 10px 14px; text-align: left; color: var(--ink);
 .ep-list .e-file { font-family: var(--mono); font-size: 13px; color: var(--accent); white-space: nowrap;}
 .ep-list .e-title { flex: 1;}
 .ep-list .e-date { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap;}
+.ep-list .e-srv { font-family: var(--mono); font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; white-space: nowrap;}
 
 /* ---------- watch view ---------- */
 .player-shell { background: #000; border-radius: 12px; overflow: hidden; margin-top: 14px;}
@@ -250,6 +251,14 @@ border-radius: 8px; padding: 9px 14px; font-weight: 600;
 }
 .navrow button:disabled { opacity: 0.45; cursor: default;}
 .navrow .spacer { flex: 1;}
+.srv-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0 2px;}
+.srv-row .srv-label { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-right: 2px;}
+.srv-row button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 7px 14px; font-weight: 600; cursor: pointer;}
+.srv-row button.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent);}
+.dl-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 2px 0 14px;}
+.dl-row .srv-label { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-right: 2px;}
+.dl-row a { display: inline-block; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 7px 14px; font-weight: 600; text-decoration: none;}
+.dl-row a:hover { border-color: var(--accent); color: var(--accent);}
 
 footer { border-top: 1px solid var(--line); margin-top: 44px; padding-top: 16px; color: var(--muted); font-size: 13px;}
 footer .mono { font-family: var(--mono); font-size: 12px;}
@@ -707,6 +716,7 @@ view.innerHTML =
 '<li><button data-watch="' + a.slug + "/" + ep.n + '">' +
 '<span class="e-file">' + esc(fileName(a, ep)) + "</span>" +
 '<span class="e-title">Episode ' + ep.n + " — " + esc(ep.title) + "</span>" +
+(epSources(ep).length ? '<span class="e-srv">' + esc(epSources(ep).map((s) => s.label).join(" · ")) + "</span>" : "") +
 '<span class="e-date">' + fmtDate(ep.date) + "</span>" +
 "</button></li>").join("") + "</ul>"
 : '<div class="empty">Tidak ada episode yang cocok dengan pencarian.</div>');
@@ -738,6 +748,40 @@ if (m) return "https://drive.google.com/file/d/" + m[1] + "/preview";
 m = u.match(/(?:mega\.nz|mega\.co\.nz)\/(?:file|embed)\/([\w-]+)#([\w-]+)/);
 if (m) return "https://mega.nz/embed/" + m[1] + "#" + m[2];
 return u;
+}
+
+function serverLabel(u) {
+if (/drive\.google\.com|docs\.google\.com/i.test(u)) return "Google Drive";
+if (/mega\.nz|mega\.co\.nz/i.test(u)) return "MEGA";
+if (/youtube\.com|youtu\.be/i.test(u)) return "YouTube";
+if (/vimeo\.com/i.test(u)) return "Vimeo";
+return "Server Utama";
+}
+function epSources(ep) {
+const out = [];
+const seen = {};
+const push = (key, label, url) => { const u = (url || "").trim(); if (u && !seen[u]) { seen[u] = 1; out.push({ key, label, url: u }); } };
+push("drive", "Google Drive", ep.srcDrive);
+push("mega", "MEGA", ep.srcMega);
+push("main", serverLabel((ep.src || "").trim()), ep.src);
+return out;
+}
+function driveId(u) {
+let m = u.match(/(?:drive|docs)\.google\.com\/file\/d\/([\w-]+)/);
+if (m) return m[1];
+m = u.match(/drive\.google\.com\/(?:open|uc)\?[^#]*\bid=([\w-]+)/);
+if (m) return m[1];
+return null;
+}
+function downloadUrl(u) {
+const id = driveId(u);
+if (id) return "https://drive.google.com/uc?export=download&id=" + id;
+const m = u.match(/(?:mega\.nz|mega\.co\.nz)\/(?:file|embed)\/([\w-]+)#([\w-]+)/);
+if (m) return "https://mega.nz/file/" + m[1] + "#" + m[2];
+if (/mega\.nz|mega\.co\.nz/i.test(u)) return u;
+if (isEmbedUrl(u)) return "";
+if (/\.(mp4|webm|mkv)(\?|#|$)/i.test(u)) return u;
+return "";
 }
 
 function loadSource(url) {
@@ -784,10 +828,18 @@ if (!ep) { location.hash = "#/anime/" + slug; return;}
 const idx = a.episodes.indexOf(ep);
 const prev = a.episodes[idx - 1], next = a.episodes[idx + 1];
 const fname = fileName(a, ep);
+const sources = epSources(ep);
+const dls = sources.map((s) => ({ label: s.label, url: downloadUrl(s.url) })).filter((d) => d.url);
 view.innerHTML =
 '<p style="margin-top:18px"><a class="backlink" href="#/anime/' + a.slug + '">←../' + esc(a.slug) + '/</a></p>' +
 '<div class="watch">' +
 '<div class="player-shell"><div class="ratio" id="stage" data-file="' + esc(fname) + '"></div></div>' +
+(sources.length > 1
+? '<div class="srv-row" id="srv-row"><span class="srv-label">SERVER:</span>' + sources.map((s, i) => '<button data-srv="' + i + '"' + (i === 0 ? ' class="active"' : "") + ">" + esc(s.label) + "</button>").join("") + "</div>"
+: "") +
+(dls.length
+? '<div class="dl-row"><span class="srv-label">DOWNLOAD:</span>' + dls.map((d) => '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">⬇ ' + esc(d.label) + "</a>").join("") + "</div>"
+: "") +
 "<h2>" + esc(a.title) + " — Episode " + ep.n + "</h2>" +
 '<p class="w-sub">' + esc(fname) + " · rilis " + fmtDate(ep.date) + " · " + esc(ep.title) + "</p>" +
 '<p class="err" id="src-err"></p>' +
@@ -802,10 +854,21 @@ view.innerHTML =
 '<li><button data-watch="' + a.slug + "/" + e.n + '"' + (e.n === ep.n? ' style="background:var(--accent-soft)"': "") + ">" +
 '<span class="e-file">' + esc(fileName(a, e)) + "</span>" +
 '<span class="e-title">Episode ' + e.n + " — " + esc(e.title) + (e.n === ep.n? " · sedang diputar": "") + "</span>" +
+(epSources(e).length ? '<span class="e-srv">' + esc(epSources(e).map((s) => s.label).join(" · ")) + "</span>" : "") +
 '<span class="e-date">' + fmtDate(e.date) + "</span>" +
 "</button></li>").join("") + "</ul>" +
 "</div>";
-loadSource(ep.src || "");
+const srvRow = $("#srv-row");
+if (srvRow) {
+srvRow.addEventListener("click", (ev) => {
+const b = ev.target.closest("[data-srv]");
+if (!b) return;
+srvRow.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
+b.classList.add("active");
+loadSource(sources[parseInt(b.dataset.srv, 10)].url);
+});
+}
+loadSource(sources.length ? sources[0].url : "");
 }
 
 /* ---------------- router ---------------- */

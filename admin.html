@@ -128,9 +128,9 @@
         <textarea id="f-synopsis" placeholder="Sinopsis singkat anime"></textarea>
 
         <h3 style="margin:22px 0 4px">Episode</h3>
-        <p class="note">Panel ini mengelola <b>link</b> video saja — file videonya sendiri tidak di-upload ke sini. Untuk menambah video: upload dulu file videonya ke <b>Google Drive</b> atau <b>MEGA</b>. Khusus Google Drive, atur dulu berbaginya menjadi <b>"Siapa saja yang memiliki link"</b> (Anyone with the link) agar bisa diputar oleh pengunjung, lalu salin link berbaginya dan tempel ke kolom <b>Link Video</b> episode yang bersangkutan — player akan mengubahnya menjadi embed secara otomatis. Link yang didukung: Google Drive, MEGA, MP4, .m3u8 (HLS), YouTube, atau Vimeo; kosongkan bila belum ada.</p>
+        <p class="note">Panel ini mengelola <b>link</b> video saja — file videonya sendiri tidak di-upload ke sini. Upload dulu file videonya ke <b>Google Drive</b> dan/atau <b>MEGA</b>, lalu tempel link berbaginya ke kolom server yang sesuai di tiap episode. Khusus Google Drive, atur dulu berbaginya menjadi <b>"Siapa saja yang memiliki link"</b> (Anyone with the link) agar bisa diputar oleh pengunjung. Bila sebuah episode punya lebih dari satu server terisi, pengunjung bisa <b>memilih server</b> (Google Drive / MEGA / Lainnya) di halaman nonton. Tombol <b>Download</b> muncul otomatis di halaman nonton untuk server Google Drive, MEGA, dan file MP4/WebM langsung (YouTube/Vimeo tidak menyediakan unduhan). Kolom <b>Link Lainnya</b> untuk MP4, .m3u8 (HLS), YouTube, atau Vimeo. Kosongkan kolom yang tidak dipakai.</p>
         <table>
-          <thead><tr><th style="width:64px">Nomor</th><th>Judul Episode</th><th style="width:140px">Tanggal</th><th>Link Video (src)</th><th style="width:70px">Aksi</th></tr></thead>
+          <thead><tr><th style="width:64px">Nomor</th><th>Judul Episode</th><th style="width:140px">Tanggal</th><th>Link Google Drive</th><th>Link MEGA</th><th>Link Lainnya (MP4 / .m3u8 / YouTube)</th><th style="width:70px">Aksi</th></tr></thead>
           <tbody id="ep-body"></tbody>
         </table>
         <div style="margin-top:10px"><button id="btn-add-ep" type="button">+ Tambah Episode</button></div>
@@ -330,7 +330,9 @@ function renderEpisodes(){
       '<td><input type="number" min="1" step="1" class="ep-n" value="'+esc(ep.n)+'"></td>'+
       '<td><input type="text" class="ep-title" value="'+esc(ep.title||"")+'" placeholder="Judul episode"></td>'+
       '<td><input type="date" class="ep-date" value="'+esc(ep.date||"")+'"></td>'+
-      '<td><input type="text" class="ep-src" value="'+esc(ep.src||"")+'" placeholder="Link Drive / MEGA / MP4 / .m3u8 / YouTube, atau kosong"></td>'+
+      '<td><input type="text" class="ep-src-drive" value="'+esc(ep.srcDrive||"")+'" placeholder="Link berbagi Google Drive, atau kosong"></td>'+
+      '<td><input type="text" class="ep-src-mega" value="'+esc(ep.srcMega||"")+'" placeholder="Link file MEGA (dengan #key), atau kosong"></td>'+
+      '<td><input type="text" class="ep-src" value="'+esc(ep.src||"")+'" placeholder="MP4 / .m3u8 / YouTube / Vimeo, atau kosong"></td>'+
       '<td><button type="button" class="danger ep-del">Hapus</button></td>';
     tr.querySelector(".ep-del").addEventListener("click", function(){
       collectForm();
@@ -352,6 +354,8 @@ function collectEpisodes(){
       n: isNaN(n)?0:n,
       title: tr.querySelector(".ep-title").value,
       date: tr.querySelector(".ep-date").value||"",
+      srcDrive: tr.querySelector(".ep-src-drive").value.trim(),
+      srcMega: tr.querySelector(".ep-src-mega").value.trim(),
       src: tr.querySelector(".ep-src").value.trim()
     });
   });
@@ -362,7 +366,7 @@ $("#btn-add-ep").addEventListener("click", function(){
   collectForm();
   var next=1;
   (a.episodes||[]).forEach(function(ep){ if(ep.n>=next) next=ep.n+1; });
-  a.episodes.push({n:next,title:"",date:todayStr(),src:""});
+  a.episodes.push({n:next,title:"",date:todayStr(),src:"",srcDrive:"",srcMega:""});
   setDirty(true); renderEpisodes(); renderListKeepingForm();
 });
 

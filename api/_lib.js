@@ -266,6 +266,8 @@ function validateCatalog(input) {
         title: str(ep.title, 500),
         date: epDate,
         src: str(ep.src, 5000).trim(),
+        srcDrive: str(ep.srcDrive, 5000).trim(),
+        srcMega: str(ep.srcMega, 5000).trim(),
       });
     }
     episodes.sort((x, y) => x.n - y.n);
