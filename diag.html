@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnostik Katalog - StreamAnime</title>
+<style>
+body { font-family: monospace; background:#111; color:#eee; margin:16px; font-size:14px; line-height:1.5; }
+h1 { font-size:17px; }
+.line { border-bottom:1px solid #333; padding:8px 0; white-space:pre-wrap; word-break:break-all; }
+.ok { color:#7ee787; } .err { color:#ff7b72; } .wait { color:#d29922; }
+</style>
+</head>
+<body>
+<h1>Diagnostik pengambilan katalog</h1>
+<div id="out"></div>
+<script>
+var out = document.getElementById("out");
+function line(txt, cls) {
+  var d = document.createElement("div");
+  d.className = "line " + (cls || "");
+  d.textContent = txt;
+  out.appendChild(d);
+}
+function withTimeout(p, ms, label) {
+  return Promise.race([
+    p,
+    new Promise(function (_, rej) { setTimeout(function () { rej(new Error("TIMEOUT " + ms + "ms (" + label + ")")); }, ms); })
+  ]);
+}
+function probeFetch(num, url, opts, label) {
+  line(num + ". " + label + " ...", "wait");
+  return withTimeout(
+    fetch(url, opts).then(function (r) {
+      return r.text().then(function (t) {
+        line(num + ". " + label + " -> HTTP " + r.status + ", panjang isi " + t.length + " karakter, awal: " + t.slice(0, 60), "ok");
+      });
+    }),
+    15000, label
+  ).catch(function (e) {
+    line(num + ". " + label + " -> GAGAL: " + (e && e.name ? e.name : "Error") + ": " + (e && e.message ? e.message : e), "err");
+  });
+}
+function probeXhr(num, url, label) {
+  line(num + ". " + label + " ...", "wait");
+  return new Promise(function (done) {
+    var x = new XMLHttpRequest();
+    var finished = false;
+    function fin(txt, cls) { if (!finished) { finished = true; line(num + ". " + label + " -> " + txt, cls); done(); } }
+    x.open("GET", url, true);
+    x.timeout = 15000;
+    x.onload = function () { fin("HTTP " + x.status + ", panjang isi " + (x.responseText || "").length + " karakter, awal: " + (x.responseText || "").slice(0, 60), "ok"); };
+    x.onerror = function () { fin("GAGAL jaringan (status " + x.status + ")", "err"); };
+    x.ontimeout = function () { fin("TIMEOUT 15000ms", "err"); };
+    try { x.send(); } catch (e) { fin("GAGAL kirim: " + e.message, "err"); }
+  });
+}
+function probeImg(num, url, label) {
+  line(num + ". " + label + " ...", "wait");
+  return new Promise(function (done) {
+    var img = new Image();
+    var finished = false;
+    setTimeout(function () { if (!finished) { finished = true; line(num + ". " + label + " -> TIMEOUT (tidak ada jawaban sama sekali)", "err"); done(); } }, 15000);
+    img.onload = function () { if (!finished) { finished = true; line(num + ". " + label + " -> LOAD (tak terduga)", "ok"); done(); } };
+    img.onerror = function () { if (!finished) { finished = true; line(num + ". " + label + " -> data SAMPAI ke browser (error wajar: isi bukan gambar, tapi jaringan mengantar)", "ok"); done(); } };
+    img.src = url;
+  });
+}
+line("Browser: " + navigator.userAgent, "");
+line("Halaman: " + location.href, "");
+line("fetch tersedia: " + (typeof window.fetch) + " | XMLHttpRequest: " + (typeof window.XMLHttpRequest), "");
+probeFetch(1, "/api/catalog", { cache: "no-store" }, "fetch /api/catalog (no-store)")
+.then(function () { return probeFetch(2, "/api/catalog", null, "fetch /api/catalog (bawaan)"); })
+.then(function () { return probeXhr(3, "/api/catalog", "XHR /api/catalog"); })
+.then(function () { return probeFetch(4, "/api/health", null, "fetch /api/health"); })
+.then(function () { return probeFetch(5, "/", null, "fetch / (file statis)"); })
+.then(function () { return probeFetch(6, "https://streamanime-neon.vercel.app/api/catalog", null, "fetch URL lengkap /api/catalog"); })
+.then(function () { return probeImg(7, "/api/health?probe=img", "uji antar jaringan (img)"); })
+.then(function () { line("SELESAI - kirim tangkapan layar halaman ini.", "ok"); });
+</script>
+</body>
+</html>
