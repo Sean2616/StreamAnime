@@ -764,6 +764,7 @@ function driveStreamUrl(u) {
 const id = driveId(u || "");
 return id ? "https://drive.usercontent.google.com/download?id=" + id + "&export=download&confirm=t" : "";
 }
+
 function epSources(ep) {
 const out = [];
 const seen = {};
@@ -803,7 +804,7 @@ if (/\.(mp4|webm|mkv)(\?|#|$)/i.test(u)) return u;
 return "";
 }
 
-function loadSource(url) {
+function loadSource(url, forceVideo) {
 destroyPlayer();
 const stage = $("#stage");
 const errBox = $("#src-err");
@@ -815,7 +816,7 @@ stage.innerHTML = '<div class="player-empty"><span class="pe-file">' + esc($("#s
 "<p>Link video untuk episode ini diisi oleh admin lewat Panel Admin.</p></div>";
 return;
 }
-if (isEmbedUrl(clean)) {
+if (!forceVideo && isEmbedUrl(clean)) {
 stage.innerHTML = '<iframe src="' + esc(embedUrl(clean)) + '" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture" title="Video player"></iframe>';
 return;
 }
@@ -904,9 +905,9 @@ h.hidden = !showHint;
 if (showHint) h.textContent = "Kamu memakai server Google Drive (tampilan embed). Di HP, server Drive Langsung biasanya tampil lebih pas di layar.";
 };
 videoErrorHook = () => {
-if (autoFellBack) return false;
 const cur = sources[curSrv];
 if (!cur || cur.key !== "driveDirect") return false;
+if (autoFellBack) return false;
 const embIdx = sources.findIndex((s) => s.key === "drive" || (s.key === "main" && driveId(s.url)));
 if (embIdx < 0) return false;
 autoFellBack = true;
@@ -923,6 +924,7 @@ srvRow.addEventListener("click", (ev) => {
 const b = ev.target.closest("[data-srv]");
 if (!b) return;
 curSrv = parseInt(b.dataset.srv, 10);
+autoFellBack = false;
 setActiveBtn();
 const s2 = sources[curSrv];
 loadSource(s2.play || s2.url);
