@@ -830,6 +830,13 @@ route();
 
 /* ---------------- loader katalog dari server (Panel Admin) ---------------- */
 let catalogReady = false;
+let lastCatError = "";
+function errText(e) {
+if (!e) return "tidak diketahui";
+const nm = e.name ? e.name : "Error";
+const ms = e.message ? String(e.message).slice(0, 140) : String(e).slice(0, 140);
+return nm + ": " + ms;
+}
 function setCatNote(state) {
 const n = $("#cat-note");
 if (!n) return;
@@ -837,6 +844,7 @@ if (state === "ok") { n.style.display = "none"; n.innerHTML = ""; return; }
 n.style.display = "block";
 if (state === "loading") { n.textContent = "Memuat katalog dari server…"; return; }
 n.innerHTML = 'Gagal memuat katalog dari server. Periksa koneksimu, lalu <button type="button" id="cat-retry" style="margin-left:6px;padding:2px 12px;border-radius:8px;border:1px solid #d97706;background:#78350f;color:#fde68a;cursor:pointer">Coba Lagi</button>';
+if (lastCatError) { const dv = document.createElement("div"); dv.style.cssText = "margin-top:6px;font-size:12px;opacity:.85"; dv.textContent = "Detail error: " + lastCatError; n.appendChild(dv); }
 const b = $("#cat-retry");
 if (b) b.addEventListener("click", () => loadServerCatalog(0));
 }
@@ -879,8 +887,13 @@ fetch("/api/catalog", { cache: "no-store", signal: ctrl ? ctrl.signal : undefine
 function loadServerCatalog(attempt) {
 if (!catalogReady) setCatNote("loading");
 fetchCatalogOnce()
-  .then((d) => { if (!applyCatalog(d)) scheduleCatalogRetry(attempt); })
-  .catch(() => scheduleCatalogRetry(attempt));
+  .then((d) => {
+    let applied = false;
+    try { applied = applyCatalog(d); }
+    catch (e) { lastCatError = "saat menerapkan katalog: " + errText(e); scheduleCatalogRetry(attempt); return; }
+    if (!applied) { lastCatError = "bentuk data dari server tidak dikenal"; scheduleCatalogRetry(attempt); }
+  })
+  .catch((e) => { lastCatError = "saat mengambil data: " + errText(e); scheduleCatalogRetry(attempt); });
 }
 function scheduleCatalogRetry(attempt) {
 const delays = [800, 1600, 3200, 6400];
