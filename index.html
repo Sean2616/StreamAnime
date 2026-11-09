@@ -256,6 +256,7 @@ border-radius: 8px; padding: 9px 14px; font-weight: 600;
 .srv-row .srv-label { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-right: 2px;}
 .srv-row button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 7px 14px; font-weight: 600; cursor: pointer;}
 .srv-row button.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent);}
+.srv-hint { color: var(--muted); font-size: 12.5px; margin: 6px 0 0;}
 .dl-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 2px 0 14px;}
 .dl-row .srv-label { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-right: 2px;}
 .dl-row a { display: inline-block; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 7px 14px; font-weight: 600; text-decoration: none;}
@@ -728,6 +729,7 @@ $("#ep-sort").addEventListener("click", () => { detailState.desc =!detailState.d
 
 /* ---------------- watch view ---------------- */
 let hls = null;
+let videoErrorHook = null;
 function destroyPlayer() {
 if (hls) { try { hls.destroy();} catch (e) {} hls = null;}
 const v = $("#vid");
@@ -821,6 +823,9 @@ stage.innerHTML = '<video id="vid" controls playsinline preload="metadata"></vid
 const v = $("#vid");
 v.addEventListener("error", () => {
 if (!v.error) return;
+let handled = false;
+if (typeof videoErrorHook === "function") { try { handled = !!videoErrorHook(); } catch (e) {} }
+if (handled) return;
 const e2 = $("#src-err");
 if (e2) { e2.style.display = "block"; e2.textContent = "Video tidak dapat diputar dari server ini di perangkatmu. Coba server lain lewat tombol SERVER di atas."; }
 });
@@ -856,7 +861,7 @@ const sources = epSources(ep);
 const seenDl = {};
 const dls = sources.map((s) => ({ label: s.label, url: downloadUrl(s.url) })).filter((d) => d.url && !seenDl[d.url] && (seenDl[d.url] = 1));
 let defIdx = 0;
-if (isMobileDevice()) { const di = sources.findIndex((s) => s.key === "driveDirect"); if (di > 0) defIdx = di; }
+{ const di = sources.findIndex((s) => s.key === "driveDirect"); if (di > 0) defIdx = di; }
 view.innerHTML =
 '<p style="margin-top:18px"><a class="backlink" href="#/anime/' + a.slug + '">←../' + esc(a.slug) + '/</a></p>' +
 '<div class="watch">' +
@@ -864,6 +869,7 @@ view.innerHTML =
 (sources.length > 1
 ? '<div class="srv-row" id="srv-row"><span class="srv-label">SERVER:</span>' + sources.map((s, i) => '<button data-srv="' + i + '"' + (i === defIdx ? ' class="active"' : "") + ">" + esc(s.label) + "</button>").join("") + "</div>"
 : "") +
+(sources.length > 1 ? '<p class="srv-hint" id="srv-hint" hidden></p>' : "") +
 (dls.length
 ? '<div class="dl-row"><span class="srv-label">DOWNLOAD:</span>' + dls.map((d) => '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">⬇ ' + esc(d.label) + "</a>").join("") + "</div>"
 : "") +
@@ -885,24 +891,52 @@ view.innerHTML =
 '<span class="e-date">' + fmtDate(e.date) + "</span>" +
 "</button></li>").join("") + "</ul>" +
 "</div>";
+let curSrv = defIdx;
+let autoFellBack = false;
 const srvRow = $("#srv-row");
+const setActiveBtn = () => { if (srvRow) srvRow.querySelectorAll("button").forEach((x, xi) => x.classList.toggle("active", xi === curSrv)); };
+const updateHint = () => {
+const h = $("#srv-hint");
+if (!h) return;
+const cur = sources[curSrv];
+const showHint = isMobileDevice() && cur && cur.key === "drive";
+h.hidden = !showHint;
+if (showHint) h.textContent = "Kamu memakai server Google Drive (tampilan embed). Di HP, server Drive Langsung biasanya tampil lebih pas di layar.";
+};
+videoErrorHook = () => {
+if (autoFellBack) return false;
+const cur = sources[curSrv];
+if (!cur || cur.key !== "driveDirect") return false;
+const embIdx = sources.findIndex((s) => s.key === "drive" || (s.key === "main" && driveId(s.url)));
+if (embIdx < 0) return false;
+autoFellBack = true;
+curSrv = embIdx;
+setActiveBtn();
+loadSource(sources[embIdx].play || sources[embIdx].url);
+const e2 = $("#src-err");
+if (e2) { e2.style.display = "block"; e2.textContent = "Drive Langsung tidak bisa memutar file ini di perangkatmu — otomatis dialihkan ke server Google Drive."; }
+updateHint();
+return true;
+};
 if (srvRow) {
 srvRow.addEventListener("click", (ev) => {
 const b = ev.target.closest("[data-srv]");
 if (!b) return;
-srvRow.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
-b.classList.add("active");
-const s2 = sources[parseInt(b.dataset.srv, 10)];
+curSrv = parseInt(b.dataset.srv, 10);
+setActiveBtn();
+const s2 = sources[curSrv];
 loadSource(s2.play || s2.url);
+updateHint();
 });
 }
 loadSource(sources.length ? (sources[defIdx].play || sources[defIdx].url) : "");
+updateHint();
 }
 
 /* ---------------- router ---------------- */
 function show(view) {
 ["home", "detail", "watch"].forEach((v) => { $("#view-" + v).hidden = v!== view;});
-if (view!== "watch") destroyPlayer();
+if (view!== "watch") { destroyPlayer(); videoErrorHook = null; }
 window.scrollTo(0, 0);
 }
 function route() {
