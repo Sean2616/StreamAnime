@@ -234,6 +234,7 @@ padding: 10px 14px; text-align: left; color: var(--ink);
 .player-shell { background: #000; border-radius: 12px; overflow: hidden; margin-top: 14px;}
 .player-shell .ratio { position: relative; aspect-ratio: 16 / 9;}
 .player-shell video,.player-shell iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0;}
+.player-shell video { object-fit: contain; background: #000;}
 .player-empty {
 position: absolute; inset: 0; display: flex; flex-direction: column; gap: 8px;
 align-items: center; justify-content: center; text-align: center; padding: 20px;
@@ -716,7 +717,7 @@ view.innerHTML =
 '<li><button data-watch="' + a.slug + "/" + ep.n + '">' +
 '<span class="e-file">' + esc(fileName(a, ep)) + "</span>" +
 '<span class="e-title">Episode ' + ep.n + " — " + esc(ep.title) + "</span>" +
-(epSources(ep).length ? '<span class="e-srv">' + esc(epSources(ep).map((s) => s.label).join(" · ")) + "</span>" : "") +
+(epSources(ep).length ? '<span class="e-srv">' + esc(epSources(ep).filter((s) => s.key !== "driveDirect").map((s) => s.label).join(" · ")) + "</span>" : "") +
 '<span class="e-date">' + fmtDate(ep.date) + "</span>" +
 "</button></li>").join("") + "</ul>"
 : '<div class="empty">Tidak ada episode yang cocok dengan pencarian.</div>');
@@ -757,14 +758,30 @@ if (/youtube\.com|youtu\.be/i.test(u)) return "YouTube";
 if (/vimeo\.com/i.test(u)) return "Vimeo";
 return "Server Utama";
 }
+function driveStreamUrl(u) {
+const id = driveId(u || "");
+return id ? "https://drive.usercontent.google.com/download?id=" + id + "&export=download&confirm=t" : "";
+}
 function epSources(ep) {
 const out = [];
 const seen = {};
-const push = (key, label, url) => { const u = (url || "").trim(); if (u && !seen[u]) { seen[u] = 1; out.push({ key, label, url: u }); } };
-push("drive", "Google Drive", ep.srcDrive);
+const push = (key, label, url, play) => { const u = (url || "").trim(); if (u && !seen[u]) { seen[u] = 1; out.push({ key, label, url: u, play: play || u }); } };
+const pushDrivePair = (key, label, url) => {
+const u = (url || "").trim();
+push(key, label, u);
+const direct = driveStreamUrl(u);
+if (direct) { const e = { key: "driveDirect", label: "Drive Langsung", url: u, play: direct }; if (!out.some((x) => x.key === "driveDirect")) out.push(e); }
+};
+pushDrivePair("drive", "Google Drive", ep.srcDrive);
 push("mega", "MEGA", ep.srcMega);
-push("main", serverLabel((ep.src || "").trim()), ep.src);
+const mainUrl = (ep.src || "").trim();
+if (driveId(mainUrl)) pushDrivePair("main", serverLabel(mainUrl), mainUrl);
+else push("main", serverLabel(mainUrl), mainUrl);
 return out;
+}
+function isMobileDevice() {
+try { if (window.matchMedia && window.matchMedia("(max-width: 820px)").matches) return true; } catch (e) {}
+return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
 }
 function driveId(u) {
 let m = u.match(/(?:drive|docs)\.google\.com\/file\/d\/([\w-]+)/);
@@ -787,6 +804,8 @@ return "";
 function loadSource(url) {
 destroyPlayer();
 const stage = $("#stage");
+const errBox = $("#src-err");
+if (errBox) { errBox.style.display = "none"; errBox.textContent = ""; }
 const clean = (url || "").trim();
 if (!clean) {
 stage.innerHTML = '<div class="player-empty"><span class="pe-file">' + esc($("#stage").dataset.file || "") + '</span>' +
@@ -800,6 +819,11 @@ return;
 }
 stage.innerHTML = '<video id="vid" controls playsinline preload="metadata"></video>';
 const v = $("#vid");
+v.addEventListener("error", () => {
+if (!v.error) return;
+const e2 = $("#src-err");
+if (e2) { e2.style.display = "block"; e2.textContent = "Video tidak dapat diputar dari server ini di perangkatmu. Coba server lain lewat tombol SERVER di atas."; }
+});
 if (/\.m3u8(\?|#|$)/i.test(clean)) {
 if (window.Hls && Hls.isSupported()) {
 hls = new Hls();
@@ -829,13 +853,16 @@ const idx = a.episodes.indexOf(ep);
 const prev = a.episodes[idx - 1], next = a.episodes[idx + 1];
 const fname = fileName(a, ep);
 const sources = epSources(ep);
-const dls = sources.map((s) => ({ label: s.label, url: downloadUrl(s.url) })).filter((d) => d.url);
+const seenDl = {};
+const dls = sources.map((s) => ({ label: s.label, url: downloadUrl(s.url) })).filter((d) => d.url && !seenDl[d.url] && (seenDl[d.url] = 1));
+let defIdx = 0;
+if (isMobileDevice()) { const di = sources.findIndex((s) => s.key === "driveDirect"); if (di > 0) defIdx = di; }
 view.innerHTML =
 '<p style="margin-top:18px"><a class="backlink" href="#/anime/' + a.slug + '">←../' + esc(a.slug) + '/</a></p>' +
 '<div class="watch">' +
 '<div class="player-shell"><div class="ratio" id="stage" data-file="' + esc(fname) + '"></div></div>' +
 (sources.length > 1
-? '<div class="srv-row" id="srv-row"><span class="srv-label">SERVER:</span>' + sources.map((s, i) => '<button data-srv="' + i + '"' + (i === 0 ? ' class="active"' : "") + ">" + esc(s.label) + "</button>").join("") + "</div>"
+? '<div class="srv-row" id="srv-row"><span class="srv-label">SERVER:</span>' + sources.map((s, i) => '<button data-srv="' + i + '"' + (i === defIdx ? ' class="active"' : "") + ">" + esc(s.label) + "</button>").join("") + "</div>"
 : "") +
 (dls.length
 ? '<div class="dl-row"><span class="srv-label">DOWNLOAD:</span>' + dls.map((d) => '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">⬇ ' + esc(d.label) + "</a>").join("") + "</div>"
@@ -854,7 +881,7 @@ view.innerHTML =
 '<li><button data-watch="' + a.slug + "/" + e.n + '"' + (e.n === ep.n? ' style="background:var(--accent-soft)"': "") + ">" +
 '<span class="e-file">' + esc(fileName(a, e)) + "</span>" +
 '<span class="e-title">Episode ' + e.n + " — " + esc(e.title) + (e.n === ep.n? " · sedang diputar": "") + "</span>" +
-(epSources(e).length ? '<span class="e-srv">' + esc(epSources(e).map((s) => s.label).join(" · ")) + "</span>" : "") +
+(epSources(e).length ? '<span class="e-srv">' + esc(epSources(e).filter((s) => s.key !== "driveDirect").map((s) => s.label).join(" · ")) + "</span>" : "") +
 '<span class="e-date">' + fmtDate(e.date) + "</span>" +
 "</button></li>").join("") + "</ul>" +
 "</div>";
@@ -865,10 +892,11 @@ const b = ev.target.closest("[data-srv]");
 if (!b) return;
 srvRow.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
 b.classList.add("active");
-loadSource(sources[parseInt(b.dataset.srv, 10)].url);
+const s2 = sources[parseInt(b.dataset.srv, 10)];
+loadSource(s2.play || s2.url);
 });
 }
-loadSource(sources.length ? sources[0].url : "");
+loadSource(sources.length ? (sources[defIdx].play || sources[defIdx].url) : "");
 }
 
 /* ---------------- router ---------------- */
