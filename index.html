@@ -546,6 +546,7 @@ if (v) { v.pause(); v.removeAttribute("src"); v.load();}
 function isEmbedUrl(u) {
 if (/\.(mp4|webm|m3u8)(\?|#|$)/i.test(u)) return false;
 if (/(youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com|mega\.nz|mega\.co\.nz)/i.test(u)) return true;
+if (/drive\.google\.com/i.test(u)) return true;
 if (/(vidhide|streamhg|hgcloud|smoothpre|earnvids|filemoon|byse|voe\.|streamtape|dood|mixdrop|vidmoly|filelion|streamwish|uqload|lulustream|vidoza|abyss|sendvid|upstream)/i.test(u)) return true;
 if (/\/(e|embed)\/[\w-]+/i.test(u) || /\/embed-[\w-]+\.html/i.test(u) || /\/v\/[\w-]+\.html/i.test(u)) return true;
 if (/\/file\/[\w-]+\/?($|[?#])/i.test(u)) return true;
@@ -558,6 +559,8 @@ m = u.match(/vimeo\.com\/(\d+)/);
 if (m) return "https://player.vimeo.com/video/" + m[1];
 m = u.match(/(?:mega\.nz|mega\.co\.nz)\/(?:file|embed)\/([\w-]+)#([\w-]+)/);
 if (m) return "https://mega.nz/embed/" + m[1] + "#" + m[2];
+m = u.match(/(?:drive|docs)\.google\.com\/file\/d\/([\w-]+)/);
+if (m) return "https://drive.google.com/file/d/" + m[1] + "/preview";
 if (/(filemoon|byse)/i.test(u)) return u.replace(/\/d\//, "/e/");
 if (/voe\./i.test(u)) return u.replace(/\/watch\//, "/e/");
 if (/streamtape/i.test(u)) return u.replace(/\/v\//, "/e/");
@@ -568,6 +571,7 @@ return u;
 }
 
 function serverLabel(u) {
+if (/drive\.google\.com/i.test(u)) return "Google Drive";
 if (/mega\.nz|mega\.co\.nz/i.test(u)) return "MEGA";
 if (/youtube\.com|youtu\.be/i.test(u)) return "YouTube";
 if (/vimeo\.com/i.test(u)) return "Vimeo";
@@ -587,13 +591,16 @@ return "Embed";
 return "Server Utama";
 }
 function epSources(ep) {
-/* Streaming: Drive TIDAK lagi jadi sumber putar. srcDrive hanya untuk Download. */
+/* Streaming: MEGA, Link Lainnya, lalu Google Drive (player pratinjau /preview dari kolom Drive), lalu server tambahan.
+   Kolom Drive (srcDrive) juga tetap satu-satunya sumber Download. */
 const out = [];
 const seen = {};
 const push = (key, label, url, play) => { const u = (url || "").trim(); if (u && !seen[u] && !driveId(u)) { seen[u] = 1; out.push({ key, label, url: u, play: play || u }); } };
 push("mega", "MEGA", ep.srcMega);
 const mainUrl = (ep.src || "").trim();
 push("main", serverLabel(mainUrl), mainUrl);
+const did = driveId((ep && ep.srcDrive) || "");
+if (did) { const pv = "https://drive.google.com/file/d/" + did + "/preview"; if (!seen[pv]) { seen[pv] = 1; out.push({ key: "drive", label: "Google Drive", url: pv, play: pv }); } }
 (ep.servers || []).forEach((srv, i) => {
 const u = (srv.url || "").trim();
 if (!u) return;
