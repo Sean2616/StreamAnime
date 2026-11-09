@@ -128,9 +128,9 @@
         <textarea id="f-synopsis" placeholder="Sinopsis singkat anime"></textarea>
 
         <h3 style="margin:22px 0 4px">Episode</h3>
-        <p class="note">Panel ini mengelola <b>link</b> video saja — file videonya sendiri tidak di-upload ke sini. Upload dulu file videonya ke <b>Google Drive</b> dan/atau <b>MEGA</b>, lalu tempel link berbaginya ke kolom server yang sesuai di tiap episode. Khusus Google Drive, atur dulu berbaginya menjadi <b>"Siapa saja yang memiliki link"</b> (Anyone with the link) agar bisa diputar oleh pengunjung. Bila sebuah episode punya lebih dari satu server terisi, pengunjung bisa <b>memilih server</b> (Google Drive / MEGA / Lainnya) di halaman nonton. Tombol <b>Download</b> muncul otomatis di halaman nonton untuk server Google Drive, MEGA, dan file MP4/WebM langsung (YouTube/Vimeo tidak menyediakan unduhan). Kolom <b>Link Lainnya</b> untuk MP4, .m3u8 (HLS), YouTube, atau Vimeo. Kosongkan kolom yang tidak dipakai.</p>
+        <p class="note">Panel ini mengelola <b>link</b> video saja — file videonya sendiri tidak di-upload ke sini. Upload dulu file videonya ke <b>Google Drive</b> dan/atau <b>MEGA</b>, lalu tempel link berbaginya ke kolom server yang sesuai di tiap episode. Khusus Google Drive, atur dulu berbaginya menjadi <b>"Siapa saja yang memiliki link"</b> (Anyone with the link) agar bisa diputar oleh pengunjung. Bila sebuah episode punya lebih dari satu server terisi, pengunjung bisa <b>memilih server</b> (Google Drive / MEGA / Lainnya) di halaman nonton. Tombol <b>Download</b> muncul otomatis di halaman nonton untuk server Google Drive, MEGA, dan file MP4/WebM langsung (YouTube/Vimeo tidak menyediakan unduhan). Kolom <b>Link Lainnya</b> untuk MP4, .m3u8 (HLS), YouTube, Vimeo, atau <b>link embed</b> dari host streaming file seperti <b>VidHide</b>, Filemoon, VOE, Streamtape, Doodstream, MixDrop, dan Archive.org — tempel link embed-nya (biasanya tombol "Embed" di situs host tersebut), nama servernya tampil otomatis mengikuti host-nya. Kosongkan kolom yang tidak dipakai.</p>
         <table>
-          <thead><tr><th style="width:64px">Nomor</th><th>Judul Episode</th><th style="width:140px">Tanggal</th><th>Link Google Drive</th><th>Link MEGA</th><th>Link Lainnya (MP4 / .m3u8 / YouTube)</th><th style="width:70px">Aksi</th></tr></thead>
+          <thead><tr><th style="width:64px">Nomor</th><th>Judul Episode</th><th style="width:140px">Tanggal</th><th>Link Google Drive</th><th>Link MEGA</th><th>Link Lainnya (MP4 / .m3u8 / YouTube / Embed)</th><th style="width:70px">Aksi</th></tr></thead>
           <tbody id="ep-body"></tbody>
         </table>
         <div style="margin-top:10px"><button id="btn-add-ep" type="button">+ Tambah Episode</button></div>
@@ -332,7 +332,7 @@ function renderEpisodes(){
       '<td><input type="date" class="ep-date" value="'+esc(ep.date||"")+'"></td>'+
       '<td><input type="text" class="ep-src-drive" value="'+esc(ep.srcDrive||"")+'" placeholder="Link berbagi Google Drive, atau kosong"></td>'+
       '<td><input type="text" class="ep-src-mega" value="'+esc(ep.srcMega||"")+'" placeholder="Link file MEGA (dengan #key), atau kosong"></td>'+
-      '<td><input type="text" class="ep-src" value="'+esc(ep.src||"")+'" placeholder="MP4 / .m3u8 / YouTube / Vimeo, atau kosong"></td>'+
+      '<td><input type="text" class="ep-src" value="'+esc(ep.src||"")+'" placeholder="MP4 / .m3u8 / YouTube / link embed VidHide dll, atau kosong"></td>'+
       '<td><button type="button" class="danger ep-del">Hapus</button></td>';
     tr.querySelector(".ep-del").addEventListener("click", function(){
       collectForm();

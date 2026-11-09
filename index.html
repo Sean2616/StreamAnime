@@ -737,7 +737,11 @@ if (v) { v.pause(); v.removeAttribute("src"); v.load();}
 }
 
 function isEmbedUrl(u) {
-return /(youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com|drive\.google\.com|mega\.nz|mega\.co\.nz)/i.test(u) &&!/\.(mp4|webm|m3u8)(\?|#|$)/i.test(u);
+if (/\.(mp4|webm|m3u8)(\?|#|$)/i.test(u)) return false;
+if (/(youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com|drive\.google\.com|mega\.nz|mega\.co\.nz)/i.test(u)) return true;
+if (/(vidhide|streamhg|hgcloud|smoothpre|earnvids|filemoon|byse|voe\.|streamtape|dood|mixdrop|vidmoly|filelion|streamwish|uqload|lulustream|vidoza|abyss|sendvid|upstream)/i.test(u)) return true;
+if (/\/(e|embed)\/[\w-]+/i.test(u) || /\/embed-[\w-]+\.html/i.test(u) || /\/v\/[\w-]+\.html/i.test(u)) return true;
+return false;
 }
 function embedUrl(u) {
 let m = u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/);
@@ -750,6 +754,10 @@ m = u.match(/drive\.google\.com\/(?:open|uc)\?[^#]*\bid=([\w-]+)/);
 if (m) return "https://drive.google.com/file/d/" + m[1] + "/preview";
 m = u.match(/(?:mega\.nz|mega\.co\.nz)\/(?:file|embed)\/([\w-]+)#([\w-]+)/);
 if (m) return "https://mega.nz/embed/" + m[1] + "#" + m[2];
+if (/(filemoon|byse)/i.test(u)) return u.replace(/\/d\//, "/e/");
+if (/voe\./i.test(u)) return u.replace(/\/watch\//, "/e/");
+if (/streamtape/i.test(u)) return u.replace(/\/v\//, "/e/");
+if (/dood/i.test(u)) return u.replace(/\/d\//, "/e/");
 return u;
 }
 
@@ -758,6 +766,19 @@ if (/drive\.google\.com|docs\.google\.com/i.test(u)) return "Google Drive";
 if (/mega\.nz|mega\.co\.nz/i.test(u)) return "MEGA";
 if (/youtube\.com|youtu\.be/i.test(u)) return "YouTube";
 if (/vimeo\.com/i.test(u)) return "Vimeo";
+if (/(vidhide|streamhg|hgcloud|smoothpre|earnvids)/i.test(u)) return "VidHide";
+if (/(filemoon|byse)/i.test(u)) return "Filemoon";
+if (/voe\./i.test(u)) return "VOE";
+if (/streamtape/i.test(u)) return "Streamtape";
+if (/dood/i.test(u)) return "Doodstream";
+if (/mixdrop/i.test(u)) return "MixDrop";
+if (/vidmoly/i.test(u)) return "VidMoly";
+if (/archive\.org/i.test(u)) return "Archive.org";
+if (isEmbedUrl(u)) {
+const hm = String(u).match(/^(?:https?:)?\/\/([^\/:?#]+)/i);
+if (hm) { const brand = hm[1].replace(/^www\./, "").split(".")[0]; if (brand) return brand.charAt(0).toUpperCase() + brand.slice(1); }
+return "Embed";
+}
 return "Server Utama";
 }
 function driveStreamUrl(u) {
