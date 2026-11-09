@@ -612,6 +612,8 @@ let m = u.match(/(?:drive|docs)\.google\.com\/file\/d\/([\w-]+)/);
 if (m) return m[1];
 m = u.match(/drive\.google\.com\/(?:open|uc)\?[^#]*\bid=([\w-]+)/);
 if (m) return m[1];
+m = u.match(/drive\.usercontent\.google\.com\/download\?[^#]*\bid=([\w-]+)/);
+if (m) return m[1];
 return null;
 }
 function downloadUrl(u) {
