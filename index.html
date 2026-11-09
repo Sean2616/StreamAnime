@@ -610,7 +610,9 @@ push("custom" + i, label, u);
 return out;
 }
 function epDownloads(ep) {
-/* Download HANYA dari Google Drive (kolom srcDrive di admin). */
+/* Download HANYA dari Google Drive (kolom srcDrive di admin).
+   Tombolnya membuka HALAMAN FILE Drive di tab baru (bukan unduhan langsung),
+   supaya di HP tidak dilempar ke aplikasi Drive. */
 const url = downloadUrl((ep && ep.srcDrive) || "");
 return url ? [{ label: "Google Drive", url }] : [];
 }
@@ -625,7 +627,7 @@ return null;
 }
 function downloadUrl(u) {
 const id = driveId(u);
-if (id) return "https://drive.google.com/uc?export=download&id=" + id;
+if (id) return "https://drive.google.com/file/d/" + id + "/view?usp=sharing";
 return "";
 }
 
