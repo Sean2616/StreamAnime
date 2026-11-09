@@ -1,0 +1,1 @@
+{"main":"server.js","name":"streamanime","private":true,"scripts":{"start":"node server.js"}}

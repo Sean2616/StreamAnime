@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Admin — StreamAnime</title>
+<style>
+  :root{--bg:#f7f7f5;--card:#fff;--line:#ddd;--text:#222;--muted:#666;--accent:#2563eb;--danger:#b91c1c;--ok:#15803d}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text)}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  header{background:var(--card);border-bottom:1px solid var(--line);padding:14px 20px}
+  header h1{margin:4px 0 2px;font-size:20px}
+  header p{margin:0;color:var(--muted);font-size:13px}
+  .crumb{color:var(--muted);font-size:13px}
+  main{max-width:1180px;margin:0 auto;padding:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px}
+  .hidden{display:none!important}
+  label{display:block;font-size:13px;font-weight:600;margin:12px 0 4px}
+  input[type=text],input[type=password],input[type=number],input[type=date],select,textarea{
+    width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:14px;background:#fff}
+  textarea{min-height:90px;resize:vertical}
+  button{font:inherit;font-size:14px;padding:8px 14px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer}
+  button:hover{border-color:#bbb}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  button.danger{color:var(--danger);border-color:#e5b4b4}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .grow{flex:1}
+  .msg{margin:12px 0;padding:10px 12px;border-radius:6px;font-size:14px;display:none}
+  .msg.show{display:block}
+  .msg.err{background:#fef2f2;color:var(--danger);border:1px solid #fecaca}
+  .msg.ok{background:#f0fdf4;color:var(--ok);border:1px solid #bbf7d0}
+  .msg.warn{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+  .layout{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
+  @media(max-width:820px){.layout{grid-template-columns:1fr}}
+  .title-list{list-style:none;margin:10px 0 0;padding:0;max-height:560px;overflow:auto}
+  .title-list li{padding:8px 10px;border:1px solid var(--line);border-radius:6px;margin-bottom:6px;cursor:pointer;background:#fff}
+  .title-list li:hover{border-color:#bbb}
+  .title-list li.sel{border-color:var(--accent);background:#eff6ff}
+  .title-list .t{font-weight:600;font-size:14px}
+  .title-list .s{color:var(--muted);font-size:12px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+  @media(max-width:640px){.grid2{grid-template-columns:1fr}}
+  .poster-preview{max-width:180px;border:1px solid var(--line);border-radius:6px;display:block;margin-top:8px}
+  .note{color:var(--muted);font-size:12px;margin-top:4px}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  th,td{border:1px solid var(--line);padding:6px;font-size:13px;vertical-align:top}
+  th{background:#fafafa;text-align:left}
+  td input{padding:6px 8px;font-size:13px}
+  .dirty{color:#92400e;font-weight:600;font-size:13px}
+  .topbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  #login-wrap{max-width:420px;margin:40px auto}
+</style>
+</head>
+<body>
+<header>
+  <div class="crumb mono">index / anime / admin</div>
+  <h1>Panel Admin — StreamAnime</h1>
+  <p>Tambah, edit, dan hapus anime beserta episodenya. Perubahan yang disimpan ke server berlaku untuk semua pengunjung.</p>
+</header>
+<main>
+  <!-- pesan global -->
+  <div id="msg" class="msg" role="alert"></div>
+
+  <!-- peringatan setup -->
+  <div id="setup-warning" class="card hidden">
+    <h2 style="margin-top:0">⚠️ Penyimpanan belum diatur</h2>
+    <p>Server belum terhubung ke Firebase (<span class="mono">FIREBASE_DB_URL</span> belum diatur di Environment Variables Vercel), jadi katalog belum bisa diedit atau disimpan dari panel ini.</p>
+    <p>Ikuti langkah di <span class="mono">PETUNJUK_ADMIN.txt</span>: buat Firebase Realtime Database gratis, isi <span class="mono">ADMIN_PASSWORD</span> dan <span class="mono">FIREBASE_DB_URL</span> di Vercel, lalu Redeploy dan buka lagi halaman ini.</p>
+  </div>
+
+  <!-- login -->
+  <div id="login-wrap" class="card hidden">
+    <h2 style="margin-top:0">Login Admin</h2>
+    <form id="login-form">
+      <label for="login-password">Password Admin</label>
+      <input type="password" id="login-password" autocomplete="current-password" placeholder="Password yang diatur di Vercel (ADMIN_PASSWORD)">
+      <div style="margin-top:14px"><button type="submit" class="primary" style="width:100%">Masuk</button></div>
+      <p class="note">Login ini diperiksa di server — password hanya tersimpan sebagai Environment Variable di Vercel, bukan di file ini.</p>
+    </form>
+  </div>
+
+  <!-- editor -->
+  <div id="editor" class="hidden">
+    <div class="topbar">
+      <button id="btn-save" class="primary">💾 Simpan ke Server</button>
+      <button id="btn-reload">Muat Ulang dari Server</button>
+      <button id="btn-logout">Keluar</button>
+      <span id="dirty-hint" class="dirty hidden">Ada perubahan belum disimpan</span>
+      <span id="stats" class="note" style="margin:0"></span>
+    </div>
+    <div class="layout">
+      <!-- kolom kiri: daftar judul -->
+      <div class="card">
+        <label for="search" style="margin-top:0">Cari judul</label>
+        <input type="text" id="search" placeholder="Cari anime...">
+        <div style="margin-top:10px"><button id="btn-add" style="width:100%">+ Tambah Anime</button></div>
+        <ul id="title-list" class="title-list"></ul>
+      </div>
+
+      <!-- kolom kanan: form -->
+      <div class="card" id="form-card">
+        <h2 style="margin-top:0" id="form-heading">Edit Anime</h2>
+        <div class="grid2">
+          <div><label for="f-title">Judul *</label><input type="text" id="f-title" placeholder="Judul anime"></div>
+          <div><label for="f-slug">Slug</label><input type="text" id="f-slug" class="mono" placeholder="slug-unik-anime"><p class="note">Otomatis dibuat dari judul saat menambah anime baru; boleh diedit.</p></div>
+        </div>
+        <label for="f-alt">Judul Alternatif</label>
+        <input type="text" id="f-alt" placeholder="Judul alternatif / judul Jepang">
+        <div class="grid2">
+          <div><label for="f-year">Tahun</label><input type="number" id="f-year" min="1900" max="2100" step="1"></div>
+          <div><label for="f-rating">Rating (0–10)</label><input type="number" id="f-rating" min="0" max="10" step="0.1"></div>
+        </div>
+        <div class="grid2">
+          <div><label for="f-status">Status</label>
+            <select id="f-status"><option value="Ongoing">Ongoing</option><option value="Completed">Completed</option></select></div>
+          <div><label for="f-updated">Tanggal Update</label><input type="date" id="f-updated"></div>
+        </div>
+        <label for="f-studio">Studio</label>
+        <input type="text" id="f-studio" placeholder="Nama studio">
+        <label for="f-genre">Genre (pisahkan dengan koma)</label>
+        <input type="text" id="f-genre" placeholder="Action, Adventure, Fantasy">
+        <label for="f-poster">Poster (URL gambar)</label>
+        <input type="text" id="f-poster" placeholder="https://.../poster.jpg">
+        <p class="note" id="poster-note"></p>
+        <img id="poster-preview" class="poster-preview hidden" alt="Pratinjau poster">
+        <label for="f-synopsis">Sinopsis</label>
+        <textarea id="f-synopsis" placeholder="Sinopsis singkat anime"></textarea>
+
+        <h3 style="margin:22px 0 4px">Episode</h3>
+        <p class="note">Panel ini mengelola <b>link</b> video saja — file videonya sendiri di-host di tempat lain, bukan di-upload ke sini. Link boleh MP4, .m3u8 (HLS), YouTube, atau Vimeo; kosongkan bila belum ada.</p>
+        <table>
+          <thead><tr><th style="width:64px">Nomor</th><th>Judul Episode</th><th style="width:140px">Tanggal</th><th>Link Video (src)</th><th style="width:70px">Aksi</th></tr></thead>
+          <tbody id="ep-body"></tbody>
+        </table>
+        <div style="margin-top:10px"><button id="btn-add-ep" type="button">+ Tambah Episode</button></div>
+
+        <div class="row" style="margin-top:22px">
+          <button id="btn-save-2" class="primary">💾 Simpan ke Server</button>
+          <button id="btn-delete" class="danger" type="button">Hapus Anime Ini</button>
+        </div>
+        <p class="note">Menghapus anime di sini baru berlaku untuk semua pengunjung setelah kamu klik Simpan ke Server.</p>
+      </div>
+      <div class="card hidden" id="empty-card"><p>Belum ada anime dipilih. Klik "+ Tambah Anime" untuk mulai.</p></div>
+    </div>
+  </div>
+</main>
+
+<script>
+"use strict";
+var catalog = [];
+var selected = -1; // index di catalog
+var dirty = false;
+var isNewDraft = false;
+
+function $(s){ return document.querySelector(s); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function slugify(s){
+  return String(s||"").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,80);
+}
+function esc(s){ return String(s==null?"":s).replace(/[&<>\"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+function showMsg(text, kind){
+  var m=$("#msg"); m.textContent=text||""; m.className="msg"+(text?(" show "+(kind||"err")):"");
+  if(text) window.scrollTo({top:0,behavior:"smooth"});
+}
+function setDirty(v){
+  dirty=v;
+  $("#dirty-hint").classList.toggle("hidden", !v);
+}
+function totalEpisodes(){ return catalog.reduce(function(s,a){return s+((a.episodes||[]).length);},0); }
+function updateStats(){
+  $("#stats").textContent = catalog.length + " judul · " + totalEpisodes() + " episode";
+}
+
+/* ---------------- muat / sesi ---------------- */
+function loadCatalog(){
+  showMsg("");
+  return fetch("/api/admin/catalog",{cache:"no-store"}).then(function(r){
+    if(r.status===401){ showLogin(); return null; }
+    return r.json().then(function(d){ return {status:r.status, data:d}; });
+  }).then(function(res){
+    if(!res) return;
+    var d=res.data||{};
+    if(!d.catalog){
+      $("#login-wrap").classList.add("hidden");
+      $("#editor").classList.add("hidden");
+      $("#setup-warning").classList.remove("hidden");
+      return;
+    }
+    $("#setup-warning").classList.add("hidden");
+    $("#login-wrap").classList.add("hidden");
+    $("#editor").classList.remove("hidden");
+    catalog = d.catalog;
+    selected = catalog.length ? 0 : -1;
+    isNewDraft=false;
+    setDirty(false);
+    renderList(); renderForm(); updateStats();
+  }).catch(function(e){ showMsg("Gagal memuat katalog dari server: "+e.message,"err"); });
+}
+function showLogin(){
+  $("#editor").classList.add("hidden");
+  $("#setup-warning").classList.add("hidden");
+  $("#login-wrap").classList.remove("hidden");
+}
+$("#login-form").addEventListener("submit", function(e){
+  e.preventDefault();
+  var pw=$("#login-password").value;
+  fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pw})})
+    .then(function(r){ return r.json().then(function(d){ return {status:r.status,data:d}; }); })
+    .then(function(res){
+      if(res.status===200){ $("#login-password").value=""; loadCatalog(); }
+      else showMsg((res.data&&res.data.error)||"Login gagal.","err");
+    })
+    .catch(function(err){ showMsg("Gagal login: "+err.message,"err"); });
+});
+$("#btn-logout").addEventListener("click", function(){
+  fetch("/api/logout",{method:"POST"}).finally(function(){
+    catalog=[]; selected=-1; setDirty(false); showMsg(""); showLogin();
+  });
+});
+$("#btn-reload").addEventListener("click", function(){
+  if(dirty && !confirm("Ada perubahan belum disimpan. Muat ulang dari server dan buang perubahan itu?")) return;
+  loadCatalog();
+});
+
+/* ---------------- daftar judul (kolom kiri) ---------------- */
+function renderList(){
+  var q=($("#search").value||"").toLowerCase();
+  var ul=$("#title-list"); ul.innerHTML="";
+  catalog.forEach(function(a, idx){
+    if(q && (a.title+" "+a.slug).toLowerCase().indexOf(q)<0) return;
+    var li=document.createElement("li");
+    if(idx===selected) li.className="sel";
+    li.innerHTML='<div class="t">'+esc(a.title||"(tanpa judul)")+'</div><div class="s mono">'+esc(a.slug)+' · '+esc(a.year)+' · '+((a.episodes||[]).length)+' ep</div>';
+    li.addEventListener("click", function(){ collectForm(); selected=idx; isNewDraft=false; renderList(); renderForm(); });
+    ul.appendChild(li);
+  });
+  updateStats();
+}
+$("#search").addEventListener("input", renderList);
+$("#btn-add").addEventListener("click", function(){
+  collectForm();
+  var a={slug:"",title:"",alt:"",genre:[],year:new Date().getFullYear(),rating:0,status:"Ongoing",studio:"",updated:todayStr(),poster:"",synopsis:"",episodes:[]};
+  catalog.push(a);
+  selected=catalog.length-1;
+  isNewDraft=true;
+  setDirty(true);
+  renderList(); renderForm();
+  $("#f-title").focus();
+});
+
+/* ---------------- form judul ---------------- */
+function current(){ return selected>=0 ? catalog[selected] : null; }
+function renderForm(){
+  var a=current();
+  $("#form-card").classList.toggle("hidden", !a);
+  $("#empty-card").classList.toggle("hidden", !!a);
+  if(!a) return;
+  $("#form-heading").textContent = isNewDraft ? "Tambah Anime Baru" : ("Edit Anime — "+(a.title||""));
+  $("#f-title").value=a.title||"";
+  $("#f-slug").value=a.slug||"";
+  $("#f-alt").value=a.alt||"";
+  $("#f-year").value=a.year||"";
+  $("#f-rating").value=(a.rating!=null?a.rating:"");
+  $("#f-status").value=a.status||"Ongoing";
+  $("#f-updated").value=a.updated||"";
+  $("#f-studio").value=a.studio||"";
+  $("#f-genre").value=(a.genre||[]).join(", ");
+  // poster: data URI tidak dibuang ke input
+  var poster=a.poster||"";
+  var isData=poster.indexOf("data:")===0;
+  $("#f-poster").value=isData?"":poster;
+  $("#poster-note").textContent=isData
+    ? "Poster saat ini adalah poster tertanam (data URI) — kosongkan kolom ini untuk tetap memakainya, atau ketik URL gambar untuk menggantinya."
+    : (poster ? "Poster saat ini dari URL di atas. Kosongkan untuk menghapus poster." : "Belum ada poster. Isi URL gambar bila ada.");
+  var img=$("#poster-preview");
+  if(poster){ img.src=poster; img.classList.remove("hidden"); } else { img.removeAttribute("src"); img.classList.add("hidden"); }
+  renderEpisodes();
+}
+function collectForm(){
+  var a=current(); if(!a) return;
+  a.title=$("#f-title").value.trim();
+  a.slug=slugify($("#f-slug").value||a.title);
+  a.alt=$("#f-alt").value.trim();
+  var y=parseInt($("#f-year").value,10); a.year=isNaN(y)?a.year:y;
+  var r=parseFloat($("#f-rating").value); a.rating=isNaN(r)?0:r;
+  a.status=$("#f-status").value;
+  a.updated=$("#f-updated").value||todayStr();
+  a.studio=$("#f-studio").value.trim();
+  a.genre=$("#f-genre").value.split(",").map(function(g){return g.trim();}).filter(Boolean).slice(0,12);
+  var posterInput=$("#f-poster").value.trim();
+  var oldPoster=a.poster||"";
+  if(posterInput){ a.poster=posterInput; }
+  else if(oldPoster.indexOf("data:")===0){ a.poster=oldPoster; } // kosong = tetap pakai poster tertanam
+  else { a.poster=""; }
+  a.synopsis=$("#f-synopsis").value;
+  a.episodes=collectEpisodes();
+}
+["f-title","f-slug","f-alt","f-year","f-rating","f-status","f-updated","f-studio","f-genre","f-poster","f-synopsis"].forEach(function(id){
+  document.getElementById(id).addEventListener("input", function(){
+    var a=current(); if(!a) return;
+    if(id==="f-title" && isNewDraft){ $("#f-slug").value=slugify($("#f-title").value); }
+    collectForm(); setDirty(true);
+    if(id==="f-title" || id==="f-slug") renderListKeepingForm();
+  });
+});
+function renderListKeepingForm(){
+  // segarkan daftar kiri tanpa menggambar ulang form (supaya fokus tidak hilang)
+  var q=($("#search").value||"").toLowerCase();
+  var ul=$("#title-list"); ul.innerHTML="";
+  catalog.forEach(function(a, idx){
+    if(q && (a.title+" "+a.slug).toLowerCase().indexOf(q)<0) return;
+    var li=document.createElement("li");
+    if(idx===selected) li.className="sel";
+    li.innerHTML='<div class="t">'+esc(a.title||"(tanpa judul)")+'</div><div class="s mono">'+esc(a.slug)+' · '+esc(a.year)+' · '+((a.episodes||[]).length)+' ep</div>';
+    li.addEventListener("click", function(){ collectForm(); selected=idx; isNewDraft=false; renderList(); renderForm(); });
+    ul.appendChild(li);
+  });
+  updateStats();
+}
+
+/* ---------------- episode ---------------- */
+function renderEpisodes(){
+  var a=current(); var tb=$("#ep-body"); tb.innerHTML="";
+  if(!a) return;
+  (a.episodes||[]).forEach(function(ep, i){
+    var tr=document.createElement("tr");
+    tr.innerHTML=
+      '<td><input type="number" min="1" step="1" class="ep-n" value="'+esc(ep.n)+'"></td>'+
+      '<td><input type="text" class="ep-title" value="'+esc(ep.title||"")+'" placeholder="Judul episode"></td>'+
+      '<td><input type="date" class="ep-date" value="'+esc(ep.date||"")+'"></td>'+
+      '<td><input type="text" class="ep-src" value="'+esc(ep.src||"")+'" placeholder="MP4 / .m3u8 / YouTube / Vimeo, atau kosong"></td>'+
+      '<td><button type="button" class="danger ep-del">Hapus</button></td>';
+    tr.querySelector(".ep-del").addEventListener("click", function(){
+      collectForm();
+      var aa=current(); aa.episodes.splice(i,1);
+      setDirty(true); renderEpisodes(); renderListKeepingForm();
+    });
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll("input").forEach(function(inp){
+    inp.addEventListener("input", function(){ collectForm(); setDirty(true); });
+  });
+}
+function collectEpisodes(){
+  var rows=$("#ep-body").querySelectorAll("tr");
+  var eps=[];
+  rows.forEach(function(tr){
+    var n=parseInt(tr.querySelector(".ep-n").value,10);
+    eps.push({
+      n: isNaN(n)?0:n,
+      title: tr.querySelector(".ep-title").value,
+      date: tr.querySelector(".ep-date").value||"",
+      src: tr.querySelector(".ep-src").value.trim()
+    });
+  });
+  return eps;
+}
+$("#btn-add-ep").addEventListener("click", function(){
+  var a=current(); if(!a) return;
+  collectForm();
+  var next=1;
+  (a.episodes||[]).forEach(function(ep){ if(ep.n>=next) next=ep.n+1; });
+  a.episodes.push({n:next,title:"",date:todayStr(),src:""});
+  setDirty(true); renderEpisodes(); renderListKeepingForm();
+});
+
+/* ---------------- hapus & simpan ---------------- */
+$("#btn-delete").addEventListener("click", function(){
+  var a=current(); if(!a) return;
+  if(!confirm('Hapus anime "'+(a.title||a.slug)+'" dari daftar? Perubahan baru berlaku setelah Simpan ke Server.')) return;
+  catalog.splice(selected,1);
+  selected=catalog.length?Math.min(selected,catalog.length-1):-1;
+  isNewDraft=false;
+  setDirty(true);
+  renderList(); renderForm();
+  showMsg("Anime dihapus dari daftar lokal. Klik Simpan ke Server agar berlaku untuk semua pengunjung.","warn");
+});
+function validateAll(){
+  var seen={};
+  for(var i=0;i<catalog.length;i++){
+    var a=catalog[i];
+    if(!a.title || !a.title.trim()) return "Judul ke-"+(i+1)+" belum punya judul — judul wajib diisi.";
+    var slug=slugify(a.slug||a.title);
+    if(!slug) return 'Anime "'+a.title+'" belum punya slug.';
+    if(seen[slug]) return 'Slug duplikat: "'+slug+'" — setiap anime harus punya slug unik.';
+    seen[slug]=true; a.slug=slug;
+  }
+  return null;
+}
+function saveAll(){
+  collectForm();
+  var err=validateAll();
+  if(err){ showMsg(err,"err"); return; }
+  showMsg("");
+  fetch("/api/admin/catalog",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({catalog:catalog})})
+    .then(function(r){ return r.json().then(function(d){ return {status:r.status,data:d}; }); })
+    .then(function(res){
+      if(res.status===200 && res.data && res.data.ok){
+        setDirty(false); isNewDraft=false;
+        showMsg("✅ Tersimpan ke server: "+res.data.count+" judul, "+res.data.episodes+" episode. Perubahan sudah berlaku untuk semua pengunjung.","ok");
+        renderList(); renderForm();
+      } else if(res.status===401){
+        showMsg("Sesi login habis. Silakan login lagi.","err"); showLogin();
+      } else {
+        showMsg((res.data&&res.data.error)||("Gagal menyimpan (HTTP "+res.status+")."),"err");
+      }
+    })
+    .catch(function(e){ showMsg("Gagal menyimpan: "+e.message,"err"); });
+}
+$("#btn-save").addEventListener("click", saveAll);
+$("#btn-save-2").addEventListener("click", saveAll);
+
+/* ---------------- mulai ---------------- */
+loadCatalog();
+</script>
+</body>
+</html>

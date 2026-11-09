@@ -336,7 +336,7 @@ footer .mono { font-family: var(--mono); font-size: 12px;}
 <main id="view-watch" hidden></main>
 
 <footer>
-<p>Katalog di halaman ini adalah data contoh yang tersimpan di dalam file ini sendiri — ganti, tambah, atau hapus judul dan link video lewat blok <span class="mono">const CATALOG</span> di bagian script. Gunakan hanya video yang kamu miliki hak tayangnya.</p>
+<p>Katalog di halaman ini dikelola dari Panel Admin (<span class="mono">admin.html</span>) — tambah, edit, atau hapus judul dan link video di sana, dan perubahan yang tersimpan di server berlaku untuk semua pengunjung. Gunakan hanya video yang kamu miliki hak tayangnya.</p>
 <p class="mono">index/ · anime/ · episode/ — tanpa server, tanpa database.</p>
 </footer>
 </div>
@@ -357,7 +357,7 @@ Tanggal episode di bawah adalah jadwal rilis mingguan contoh.
 ================================================================ */
 const DEMO_MP4 = "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4";
 
-const CATALOG = [
+let CATALOG = [
 {
 slug: "frieren", title: "Frieren: Beyond Journey's End", alt: "Sousou no Frieren · 葬送のフリーレン",
 genre: ["Adventure", "Drama", "Fantasy"], year: 2023, rating: 9.3, status: "Ongoing",
@@ -558,7 +558,7 @@ const $ = (s, el) => (el || document).querySelector(s);
 const esc = (s) => String(s == null? "": s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const pad2 = (n) => String(n).padStart(2, "0");
 const fileName = (a, ep) => a.slug.replace(/-/g, "_") + "_ep" + pad2(ep.n) + ".mp4";
-const totalEpisodes = CATALOG.reduce((s, a) => s + a.episodes.length, 0);
+function totalEpisodes() { return CATALOG.reduce((s, a) => s + a.episodes.length, 0); }
 const bySlug = (slug) => CATALOG.find((a) => a.slug === slug);
 const fmtDate = (iso) => {
 if (!iso) return "—";
@@ -624,7 +624,7 @@ function renderHome() {
 const list = filtered();
 $("#stats").innerHTML =
 "<span><b>" + CATALOG.length + "</b> judul</span>" +
-"<span><b>" + totalEpisodes + "</b> episode terindeks</span>" +
+"<span><b>" + totalEpisodes() + "</b> episode terindeks</span>" +
 "<span><b>" + CATALOG.filter((a) => a.status === "Ongoing").length + "</b> ongoing</span>" +
 "<span>update terakhir <b>" + fmtDate(CATALOG.map((a) => a.updated).sort().pop()) + "</b></span>";
 $("#idx-count").textContent = list.length + " dari " + CATALOG.length + " judul";
@@ -886,6 +886,19 @@ fillFilters();
 renderHome();
 window.addEventListener("hashchange", route);
 route();
+
+/* ---------------- loader katalog dari server (Panel Admin) ---------------- */
+fetch("/api/catalog", { cache: "no-store" })
+  .then((r) => r.json())
+  .then((d) => {
+    if (d && Array.isArray(d.catalog) && d.catalog.length) {
+      CATALOG = d.catalog;
+      fillFilters();
+      renderHome();
+      route();
+    }
+  })
+  .catch(() => {});
 </script>
 </body>
 </html>
