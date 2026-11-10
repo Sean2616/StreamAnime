@@ -233,6 +233,7 @@ padding: 10px 14px; text-align: left; color: var(--ink);
 /* ---------- watch view ---------- */
 .player-shell { background: #000; border-radius: 12px; overflow: hidden; margin-top: 14px;}
 .player-shell .ratio { position: relative; aspect-ratio: 16 / 9;}
+.player-shell .ratio.stage-page { aspect-ratio: auto; height: min(80vh, 640px);}
 .player-shell video,.player-shell iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0;}
 .player-shell video { object-fit: contain; background: #000;}
 .player-empty {
@@ -640,6 +641,7 @@ const stage = $("#stage");
 const errBox = $("#src-err");
 if (errBox) { errBox.style.display = "none"; errBox.textContent = ""; }
 const clean = (url || "").trim();
+if (stage) stage.classList.toggle("stage-page", /file\.kiwi/i.test(clean));
 if (!clean) {
 stage.innerHTML = '<div class="player-empty"><span class="pe-file">' + esc($("#stage").dataset.file || "") + '</span>' +
 "<p><b>Belum ada sumber video untuk episode ini.</b></p>" +
