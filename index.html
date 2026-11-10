@@ -359,6 +359,8 @@ Tanggal episode di bawah adalah jadwal rilis mingguan contoh.
 const DEMO_MP4 = "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4";
 
 let CATALOG = [];
+let catalogReady = false;
+let catalogFailed = false;
 
 /* ---------------- helpers ---------------- */
 const $ = (s, el) => (el || document).querySelector(s);
@@ -492,7 +494,10 @@ const detailState = { slug: null, q: "", desc: false};
 function renderDetail(slug) {
 const a = bySlug(slug);
 const view = $("#view-detail");
-if (!a) { location.hash = "#/"; return;}
+if (!a) {
+if (!catalogReady && !catalogFailed) { view.innerHTML = '<p class="note" style="margin-top:18px">Memuat katalog dari server…</p>'; return; }
+location.hash = "#/"; return;
+}
 detailState.slug = slug;
 const eps = a.episodes.slice().sort((x, y) => detailState.desc? y.n - x.n: x.n - y.n)
 .filter((ep) =>!detailState.q || ("episode " + ep.n + " " + ep.title).toLowerCase().includes(detailState.q.toLowerCase()));
@@ -684,7 +689,10 @@ if (p && p.catch) p.catch(() => {});
 function renderWatch(slug, n) {
 const a = bySlug(slug);
 const view = $("#view-watch");
-if (!a) { location.hash = "#/"; return;}
+if (!a) {
+if (!catalogReady && !catalogFailed) { view.innerHTML = '<p class="note" style="margin-top:18px">Memuat katalog dari server…</p>'; return; }
+location.hash = "#/"; return;
+}
 const ep = a.episodes.find((e) => e.n === n) || a.episodes[0];
 if (!ep) { location.hash = "#/anime/" + slug; return;}
 const idx = a.episodes.indexOf(ep);
@@ -808,7 +816,6 @@ window.addEventListener("hashchange", route);
 route();
 
 /* ---------------- loader katalog dari server (Panel Admin) ---------------- */
-let catalogReady = false;
 let lastCatError = "";
 function errText(e) {
 if (!e) return "tidak diketahui";
@@ -881,6 +888,7 @@ fetch("/api/catalog", { cache: "no-store", signal: ctrl ? ctrl.signal : undefine
 });
 }
 function loadServerCatalog(attempt) {
+catalogFailed = false;
 if (!catalogReady) setCatNote("loading");
 fetchCatalogOnce()
   .then((d) => {
@@ -894,7 +902,7 @@ fetchCatalogOnce()
 function scheduleCatalogRetry(attempt) {
 const delays = [800, 1600, 3200, 6400];
 if (attempt < delays.length) setTimeout(() => loadServerCatalog(attempt + 1), delays[attempt]);
-else setCatNote("error");
+else { catalogFailed = true; setCatNote("error"); route(); }
 }
 loadServerCatalog(0);
 </script>
