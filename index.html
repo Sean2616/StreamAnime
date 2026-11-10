@@ -257,6 +257,10 @@ border-radius: 8px; padding: 9px 14px; font-weight: 600;
 .srv-row .srv-label { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-right: 2px;}
 .srv-row button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 7px 14px; font-weight: 600; cursor: pointer;}
 .srv-row button.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent);}
+.wa-floater { position: fixed; right: 16px; bottom: 16px; z-index: 60; display: inline-flex; align-items: center; gap: 8px; background: #25d366; color: #fff; font-weight: 700; font-size: 14px; line-height: 1; padding: 12px 16px; border-radius: 999px; box-shadow: 0 6px 20px rgba(0, 0, 0, .35); text-decoration: none;}
+.wa-floater:hover { background: #1eb856; color: #fff;}
+.wa-floater svg { width: 20px; height: 20px; flex: none;}
+@media (max-width: 560px) { .wa-floater { right: 12px; bottom: 12px; padding: 11px 14px; font-size: 13px;}}
 .srv-hint { color: var(--muted); font-size: 12.5px; margin: 6px 0 0;}
 .dl-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 2px 0 14px;}
 .dl-row .srv-label { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-right: 2px;}
@@ -342,6 +346,7 @@ footer .mono { font-family: var(--mono); font-size: 12px;}
 </footer>
 </div>
 
+<a id="wa-floater" class="wa-floater" href="#" target="_blank" rel="noopener" aria-label="Lapor link error lewat WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg><span>Lapor Link Error</span></a>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
 <script>
 "use strict";
@@ -814,6 +819,30 @@ fillFilters();
 renderHome();
 window.addEventListener("hashchange", route);
 route();
+
+/* ---------------- floater lapor link error (WhatsApp) ---------------- */
+const WA_REPORT_NUMBER = "6281268428112";
+function waReportText() {
+const lines = ["Halo, saya mau lapor link error di StreamAnime."];
+const parts = (location.hash || "#/").replace(/^#\//, "").split("/").filter(Boolean);
+if (parts[0] === "anime" && parts[1]) {
+const a = bySlug(parts[1]);
+lines.push("Anime: " + (a ? a.title : parts[1]));
+if (parts[2] === "nonton" && parts[3]) {
+lines.push("Episode: " + parts[3]);
+const act = document.querySelector("#srv-row button.active");
+if (act) lines.push("Server: " + act.textContent.trim());
+}
+}
+lines.push("Halaman: " + location.href);
+lines.push("Masalah: ");
+return lines.join("\n");
+}
+const waFloaterEl = $("#wa-floater");
+if (waFloaterEl) waFloaterEl.addEventListener("click", (e) => {
+e.preventDefault();
+window.open("https://wa.me/" + WA_REPORT_NUMBER + "?text=" + encodeURIComponent(waReportText()), "_blank", "noopener");
+});
 
 /* ---------------- loader katalog dari server (Panel Admin) ---------------- */
 let lastCatError = "";
