@@ -267,6 +267,7 @@ function renderForm(){
   $("#f-updated").value=a.updated||"";
   $("#f-studio").value=a.studio||"";
   $("#f-genre").value=(a.genre||[]).join(", ");
+  $("#f-synopsis").value=a.synopsis||"";
   // poster: data URI tidak dibuang ke input
   var poster=a.poster||"";
   var isData=poster.indexOf("data:")===0;
