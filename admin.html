@@ -3,60 +3,76 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel Admin — StreamAnime</title>
+<meta name="color-scheme" content="dark">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23141414'/%3E%3Cpath d='M18 12h11l17 40H35L18 12zm0 0h10v40H18V12zm18 0h10v40H36V12z' fill='%23E50914'/%3E%3C/svg%3E">
+<title>Panel Admin — SukaIndo</title>
 <style>
-  :root{--bg:#f7f7f5;--card:#fff;--line:#ddd;--text:#222;--muted:#666;--accent:#2563eb;--danger:#b91c1c;--ok:#15803d}
+  :root{color-scheme:dark;--bg:#141414;--card:#1f1f1f;--card-2:#282828;--line:#363636;--text:#f5f5f5;--muted:#a3a3a3;--accent:#e50914;--accent-hover:#f40612;--danger:#ff6b6b;--ok:#46d369}
   *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text)}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--text)}
   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-  header{background:var(--card);border-bottom:1px solid var(--line);padding:14px 20px}
-  header h1{margin:4px 0 2px;font-size:20px}
+  header{background:#0d0d0d;border-bottom:1px solid var(--line);padding:16px 20px}
+  header .head-row{max-width:1180px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}
+  header h1{margin:4px 0 2px;font-size:20px;display:flex;align-items:center;gap:10px}
+  header h1 .brand{color:var(--accent);font-weight:900;letter-spacing:0.06em}
   header p{margin:0;color:var(--muted);font-size:13px}
-  .crumb{color:var(--muted);font-size:13px}
+  .crumb{color:var(--muted);font-size:12.5px}
+  .back-site{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:#fff;text-decoration:none;font-size:13px;font-weight:600}
+  .back-site:hover{border-color:#777}
   main{max-width:1180px;margin:0 auto;padding:18px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:18px}
   .hidden{display:none!important}
-  label{display:block;font-size:13px;font-weight:600;margin:12px 0 4px}
+  label{display:block;font-size:13px;font-weight:600;margin:12px 0 5px;color:#e5e5e5}
   input[type=text],input[type=password],input[type=number],input[type=date],select,textarea{
-    width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:14px;background:#fff}
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:14px;background:#121212;color:var(--text)}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:#fff}
   textarea{min-height:90px;resize:vertical}
-  button{font:inherit;font-size:14px;padding:8px 14px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer}
-  button:hover{border-color:#bbb}
-  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
-  button.danger{color:var(--danger);border-color:#e5b4b4}
+  button{font:inherit;font-size:14px;padding:9px 14px;border:1px solid var(--line);border-radius:6px;background:var(--card-2);color:var(--text);cursor:pointer;min-height:40px}
+  button:hover{border-color:#888}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+  button.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+  button.danger{color:var(--danger);border-color:rgba(255,107,107,0.4);background:rgba(229,9,20,0.08)}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   .grow{flex:1}
   .msg{margin:12px 0;padding:10px 12px;border-radius:6px;font-size:14px;display:none}
   .msg.show{display:block}
-  .msg.err{background:#fef2f2;color:var(--danger);border:1px solid #fecaca}
-  .msg.ok{background:#f0fdf4;color:var(--ok);border:1px solid #bbf7d0}
-  .msg.warn{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+  .msg.err{background:#2d1215;color:#ffb4b8;border:1px solid rgba(229,9,20,0.5)}
+  .msg.ok{background:#12291a;color:var(--ok);border:1px solid rgba(70,211,105,0.4)}
+  .msg.warn{background:#2e2410;color:#fde68a;border:1px solid rgba(245,197,24,0.4)}
   .layout{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
   @media(max-width:820px){.layout{grid-template-columns:1fr}}
   .title-list{list-style:none;margin:10px 0 0;padding:0;max-height:560px;overflow:auto}
-  .title-list li{padding:8px 10px;border:1px solid var(--line);border-radius:6px;margin-bottom:6px;cursor:pointer;background:#fff}
-  .title-list li:hover{border-color:#bbb}
-  .title-list li.sel{border-color:var(--accent);background:#eff6ff}
+  .title-list li{padding:9px 11px;border:1px solid var(--line);border-radius:6px;margin-bottom:6px;cursor:pointer;background:#161616}
+  .title-list li:hover{border-color:#777}
+  .title-list li.sel{border-color:var(--accent);background:rgba(229,9,20,0.14)}
   .title-list .t{font-weight:600;font-size:14px}
   .title-list .s{color:var(--muted);font-size:12px}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
   @media(max-width:640px){.grid2{grid-template-columns:1fr}}
   .poster-preview{max-width:180px;border:1px solid var(--line);border-radius:6px;display:block;margin-top:8px}
-  .note{color:var(--muted);font-size:12px;margin-top:4px}
-  table{width:100%;border-collapse:collapse;margin-top:8px}
-  th,td{border:1px solid var(--line);padding:6px;font-size:13px;vertical-align:top}
-  th{background:#fafafa;text-align:left}
+  .note{color:var(--muted);font-size:12.5px;margin-top:6px;line-height:1.5}
+  .table-scroll{width:100%;overflow-x:auto;margin-top:8px;border:1px solid var(--line);border-radius:6px}
+  table{width:100%;min-width:860px;border-collapse:collapse}
+  th,td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:7px;font-size:13px;vertical-align:top}
+  th:last-child,td:last-child{border-right:none}
+  tbody tr:last-child td{border-bottom:none}
+  th{background:#161616;text-align:left;color:#d4d4d4;font-size:12px}
   td input{padding:6px 8px;font-size:13px}
-  .dirty{color:#92400e;font-weight:600;font-size:13px}
+  .dirty{color:#fde68a;font-weight:600;font-size:13px}
   .topbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
   #login-wrap{max-width:420px;margin:40px auto}
 </style>
 </head>
 <body>
 <header>
-  <div class="crumb mono">index / anime / admin</div>
-  <h1>Panel Admin — StreamAnime</h1>
-  <p>Tambah, edit, dan hapus anime beserta episodenya. Perubahan yang disimpan ke server berlaku untuk semua pengunjung.</p>
+  <div class="head-row">
+    <div>
+      <div class="crumb mono">sukaindo / admin</div>
+      <h1><span class="brand">SUKAINDO</span> <span>Panel Admin</span></h1>
+      <p>Tambah, edit, dan hapus katalog anime beserta episodenya.</p>
+    </div>
+    <a class="back-site" href="/">← Lihat Website</a>
+  </div>
 </header>
 <main>
   <!-- pesan global -->
@@ -65,8 +81,7 @@
   <!-- peringatan setup -->
   <div id="setup-warning" class="card hidden">
     <h2 style="margin-top:0">⚠️ Penyimpanan belum diatur</h2>
-    <p>Server belum terhubung ke Firebase (<span class="mono">FIREBASE_DB_URL</span> belum diatur di Environment Variables Vercel), jadi katalog belum bisa diedit atau disimpan dari panel ini.</p>
-    <p>Ikuti langkah di <span class="mono">PETUNJUK_ADMIN.txt</span>: buat Firebase Realtime Database gratis, isi <span class="mono">ADMIN_PASSWORD</span> dan <span class="mono">FIREBASE_DB_URL</span> di Vercel, lalu Redeploy dan buka lagi halaman ini.</p>
+    <p>Server belum terhubung ke database cloud sehingga katalog belum bisa diedit atau disimpan dari panel ini.</p>
   </div>
 
   <!-- login -->
@@ -74,9 +89,9 @@
     <h2 style="margin-top:0">Login Admin</h2>
     <form id="login-form">
       <label for="login-password">Password Admin</label>
-      <input type="password" id="login-password" autocomplete="current-password" placeholder="Password yang diatur di Vercel (ADMIN_PASSWORD)">
-      <div style="margin-top:14px"><button type="submit" class="primary" style="width:100%">Masuk</button></div>
-      <p class="note">Login ini diperiksa di server — password hanya tersimpan sebagai Environment Variable di Vercel, bukan di file ini.</p>
+      <input type="password" id="login-password" autocomplete="current-password" placeholder="Masukkan password admin…">
+      <div style="margin-top:14px"><button type="submit" class="primary" style="width:100%">Masuk ke Panel Admin</button></div>
+      <p class="note">Sesi login diverifikasi secara aman oleh server.</p>
     </form>
   </div>
 
@@ -129,10 +144,12 @@
 
         <h3 style="margin:22px 0 4px">Episode</h3>
         <p class="note">Panel ini mengelola <b>link</b> video saja — file videonya sendiri tidak di-upload ke sini. <b>Google Drive sekarang untuk Player Pratinjau + Download</b>: tempel link berbagi Drive ke kolom <b>Link Google Drive (Player &amp; Download)</b> dan atur berbaginya menjadi <b>"Siapa saja yang memiliki link"</b> (Anyone with the link) — link itu tampil sebagai server streaming <b>Google Drive</b> (player pratinjau resmi Google) di halaman nonton <b>dan</b> menjadi tombol <b>Download</b>, dan Download memang <b>hanya</b> dari Drive (MEGA / MP4 / server lain tidak menyediakan unduhan). Untuk <b>streaming</b>, pakai kolom <b>Link MEGA</b>, <b>Link Lainnya</b> (MP4, .m3u8 (HLS), YouTube, Vimeo, atau <b>link embed</b> dari host streaming seperti <b>VidHide</b>, Filemoon, Filedon, File.Kiwi, VOE, Streamtape, Doodstream, MixDrop, dan Archive.org), atau kolom <b>Server Tambahan</b> (klik <b>+ Tambah Server</b>, beri <b>nama bebas</b> dan tempel linknya). Link Drive yang ditempel ke Link Lainnya / Server Tambahan juga <b>tidak</b> akan tampil sebagai server streaming. Bila sebuah episode punya lebih dari satu server streaming terisi, pengunjung bisa <b>memilih server</b> di halaman nonton. Kosongkan kolom yang tidak dipakai.</p>
+        <div class="table-scroll">
         <table>
           <thead><tr><th style="width:64px">Nomor</th><th>Judul Episode</th><th style="width:140px">Tanggal</th><th>Link Google Drive (Player &amp; Download)</th><th>Link MEGA</th><th>Link Lainnya (MP4 / .m3u8 / YouTube / Embed)</th><th>Server Tambahan (nama bebas)</th><th style="width:70px">Aksi</th></tr></thead>
           <tbody id="ep-body"></tbody>
         </table>
+        </div>
         <div style="margin-top:10px"><button id="btn-add-ep" type="button">+ Tambah Episode</button></div>
 
         <div class="row" style="margin-top:22px">
