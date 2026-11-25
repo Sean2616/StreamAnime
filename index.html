@@ -2543,7 +2543,17 @@ function destroyPlayer() {
   if (nfpKeyHandler) { document.removeEventListener("keydown", nfpKeyHandler); nfpKeyHandler = null; }
   if (hls) { try { hls.destroy(); } catch (e) {} hls = null; }
   const v = $("#vid");
-  if (v) { v.pause(); v.removeAttribute("src"); v.load(); }
+  if (v) {
+    try { v.pause(); v.removeAttribute("src"); v.load(); v.remove(); } catch (e) {}
+  }
+  const watchEl = $("#view-watch");
+  if (watchEl) {
+    watchEl.querySelectorAll("iframe").forEach((f) => {
+      try { f.src = "about:blank"; f.remove(); } catch (e) {}
+    });
+  }
+  const st = $("#stage");
+  if (st) st.innerHTML = "";
 }
 
 function isEmbedUrl(u) {
@@ -3185,10 +3195,15 @@ function renderWatch(slug, n) {
 
 /* ---------------- Router ---------------- */
 function showTopView(view) {
+  if (view !== "watch") {
+    destroyPlayer();
+    videoErrorHook = null;
+    const wv = $("#view-watch");
+    if (wv) wv.innerHTML = "";
+  }
   ["home", "catalog", "detail", "watch"].forEach((v) => {
     $("#view-" + v).hidden = v !== view;
   });
-  if (view !== "watch") { destroyPlayer(); videoErrorHook = null; }
   if (view !== "home") stopHeroRotation();
 }
 
