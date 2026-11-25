@@ -1340,7 +1340,267 @@ img { max-width: 100%; }
   height: 100%;
   border: 0;
 }
+@media (max-width: 680px) {
+  .player-shell {
+    margin-left: calc(-4% / 0.92);
+    margin-right: calc(-4% / 0.92);
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+}
+.player-shell:fullscreen,
+.player-shell:-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.player-shell:fullscreen .ratio,
+.player-shell:-webkit-full-screen .ratio {
+  width: 100%;
+  height: min(100vh, calc(100vw * 9 / 16));
+  aspect-ratio: auto;
+}
+.drive-fs-hit {
+  position: absolute;
+  z-index: 5;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
 .player-shell video { object-fit: contain; background: #000; }
+
+/* Custom Netflix HTML5 Video Player */
+.nf-player {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  overflow: hidden;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.nf-player video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+.nfp-ui {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: radial-gradient(circle at center, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.45) 100%);
+  opacity: 1;
+  transition: opacity 0.22s ease;
+  z-index: 3;
+}
+.nf-player.idle .nfp-ui {
+  opacity: 0;
+  pointer-events: none;
+}
+.nf-player.idle { cursor: none; }
+
+.nfp-top {
+  padding: 10px 14px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.72) 0%, transparent 100%);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.88);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+.nfp-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  pointer-events: none;
+}
+.nfp-cbtn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.32);
+  background: rgba(18,18,18,0.68);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+}
+.nfp-cbtn:hover, .nfp-cbtn:active {
+  transform: scale(1.08);
+  background: rgba(229, 9, 20, 0.88);
+  border-color: #fff;
+}
+.nfp-cbtn.play-main {
+  width: 58px;
+  height: 58px;
+  background: rgba(229, 9, 20, 0.92);
+  border-color: rgba(255,255,255,0.5);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+.nfp-cbtn svg { width: 22px; height: 22px; fill: currentColor; }
+.nfp-cbtn.play-main svg { width: 28px; height: 28px; }
+@media (max-width: 560px) {
+  .nfp-center { gap: 22px; }
+  .nfp-cbtn { width: 40px; height: 40px; }
+  .nfp-cbtn.play-main { width: 52px; height: 52px; }
+  .nfp-cbtn svg { width: 19px; height: 19px; }
+  .nfp-cbtn.play-main svg { width: 24px; height: 24px; }
+}
+
+.nfp-spinner {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 48px; height: 48px;
+  margin: -24px 0 0 -24px;
+  border: 3.5px solid rgba(255,255,255,0.2);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: nfp-spin 0.75s linear infinite;
+  z-index: 2;
+  pointer-events: none;
+}
+@keyframes nfp-spin { to { transform: rotate(360deg); } }
+
+.nfp-seek-toast {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.72);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.nfp-seek-toast.left { left: 14%; }
+.nfp-seek-toast.right { right: 14%; }
+.nfp-seek-toast.show { opacity: 1; }
+
+.nfp-bottom {
+  padding: 10px 14px 10px;
+  background: linear-gradient(0deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.48) 68%, transparent 100%);
+}
+.nfp-progress-wrap {
+  position: relative;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  touch-action: none;
+}
+.nfp-track {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.26);
+  overflow: visible;
+  transition: height 0.12s ease;
+}
+.nfp-progress-wrap:hover .nfp-track { height: 6px; }
+.nfp-buf {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0%;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.45);
+}
+.nfp-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0%;
+  border-radius: 999px;
+  background: var(--red);
+}
+.nfp-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.9);
+  transform: translate(-50%, -50%);
+}
+
+.nfp-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+.nfp-left, .nfp-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nfp-ibtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #fff;
+}
+.nfp-ibtn:hover { background: rgba(255,255,255,0.14); }
+.nfp-ibtn svg { width: 20px; height: 20px; fill: currentColor; }
+.nfp-time {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #e5e5e5;
+  white-space: nowrap;
+  margin-left: 2px;
+}
+.nfp-speed {
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 5px;
+  border: 1px solid rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+.nfp-speed:hover { border-color: #fff; background: rgba(255,255,255,0.2); }
+@media (max-width: 560px) {
+  .nfp-bottom { padding: 6px 10px 8px; }
+  .nfp-ibtn { width: 32px; height: 32px; }
+  .nfp-ibtn svg { width: 18px; height: 18px; }
+  .nfp-time { font-size: 11.5px; }
+}
 .player-empty {
   position: absolute;
   inset: 0;
@@ -1440,6 +1700,7 @@ img { max-width: 100%; }
 .report-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   min-height: 36px;
   padding: 6px 14px;
@@ -1452,30 +1713,69 @@ img { max-width: 100%; }
   margin-left: auto;
 }
 .report-btn:hover { border-color: #25d366; color: #25d366; }
-@media (max-width: 640px) {
-  .report-btn { margin-left: 0; }
+
+.bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
 }
+.dl-btn { justify-content: center; }
 
 .ep-nav-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   margin-top: 14px;
 }
 .ep-nav-btn {
   min-height: 40px;
-  padding: 8px 16px;
-  border-radius: 5px;
+  padding: 8px 15px;
+  border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.22);
   background: var(--surface-2);
   color: #fff;
   font-weight: 700;
   font-size: 13.5px;
+  white-space: nowrap;
 }
 .ep-nav-btn.primary-next {
-  background: #fff;
-  color: #000;
-  border-color: #fff;
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
+}
+.ep-nav-btn.primary-next:hover { background: var(--red-hover); }
+.ep-nav-btn:disabled { opacity: 0.4; cursor: default; }
+
+@media (max-width: 640px) {
+  .watch-controls-card { padding: 14px; margin: 12px 0 20px; }
+  .watch-title-row { flex-direction: column; align-items: stretch; gap: 12px; }
+  .ep-nav-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 7px;
+    width: 100%;
+  }
+  .ep-nav-btn {
+    padding: 8px 10px;
+    font-size: 12.5px;
+    text-align: center;
+  }
+  .bar-actions {
+    width: 100%;
+    margin-left: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .bar-actions:has(> :only-child) {
+    grid-template-columns: 1fr;
+  }
+  .report-btn { margin-left: 0; width: 100%; font-size: 12.5px; padding: 6px 10px; }
+  .dl-btn { width: 100%; font-size: 12.5px; padding: 6px 10px; }
+}
 }
 .ep-nav-btn.primary-next:hover { background: #e5e5e5; }
 .ep-nav-btn:disabled { opacity: 0.4; cursor: default; }
@@ -2215,10 +2515,32 @@ function renderDetail(slug) {
   refreshWaLinks();
 }
 
-/* ---------------- Video / Embed Player Engine (100% Preserved) ---------------- */
+/* ---------------- Video / Embed Player Engine ---------------- */
 let hls = null;
 let videoErrorHook = null;
+let nfpIdleTimer = null;
+let nfpKeyHandler = null;
+let driveResizeObs = null;
+let driveFsHandler = null;
+
+function fmtClock(sec) {
+  if (!Number.isFinite(sec) || sec < 0) return "0:00";
+  const s = Math.floor(sec);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const r = s % 60;
+  return h > 0 ? (h + ":" + pad2(m) + ":" + pad2(r)) : (m + ":" + pad2(r));
+}
+
 function destroyPlayer() {
+  if (driveResizeObs) { try { driveResizeObs.disconnect(); } catch (e) {} driveResizeObs = null; }
+  if (driveFsHandler) {
+    document.removeEventListener("fullscreenchange", driveFsHandler);
+    document.removeEventListener("webkitfullscreenchange", driveFsHandler);
+    driveFsHandler = null;
+  }
+  if (nfpIdleTimer) { clearTimeout(nfpIdleTimer); nfpIdleTimer = null; }
+  if (nfpKeyHandler) { document.removeEventListener("keydown", nfpKeyHandler); nfpKeyHandler = null; }
   if (hls) { try { hls.destroy(); } catch (e) {} hls = null; }
   const v = $("#vid");
   if (v) { v.pause(); v.removeAttribute("src"); v.load(); }
@@ -2226,6 +2548,7 @@ function destroyPlayer() {
 
 function isEmbedUrl(u) {
   if (/\.(mp4|webm|m3u8)(\?|#|$)/i.test(u)) return false;
+  if (/drive\.usercontent\.google\.com\/download/i.test(u)) return false;
   if (/(youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com|mega\.nz|mega\.co\.nz)/i.test(u)) return true;
   if (/drive\.google\.com/i.test(u)) return true;
   if (/(vidhide|streamhg|hgcloud|smoothpre|earnvids|filemoon|byse|voe\.|streamtape|dood|mixdrop|vidmoly|filelion|streamwish|uqload|lulustream|vidoza|abyss|sendvid|upstream|filedon|file\.kiwi)/i.test(u)) return true;
@@ -2290,9 +2613,12 @@ function downloadUrl(u) {
 function epSources(ep) {
   const out = [];
   const seen = {};
-  const push = (key, label, url, play) => {
+  const push = (key, label, url, play, opts) => {
     const u = (url || "").trim();
-    if (u && !seen[u] && !driveId(u)) { seen[u] = 1; out.push({ key, label, url: u, play: play || u }); }
+    if (u && !seen[u] && !driveId(u)) {
+      seen[u] = 1;
+      out.push(Object.assign({ key, label, url: u, play: play || u }, opts || {}));
+    }
   };
   push("mega", "MEGA", ep.srcMega);
   const mainUrl = (ep.src || "").trim();
@@ -2300,7 +2626,10 @@ function epSources(ep) {
   const did = driveId((ep && ep.srcDrive) || "");
   if (did) {
     const pv = "https://drive.google.com/file/d/" + did + "/preview";
-    if (!seen[pv]) { seen[pv] = 1; out.push({ key: "drive", label: "Google Drive", url: pv, play: pv }); }
+    if (!seen[pv]) {
+      seen[pv] = 1;
+      out.push({ key: "drive", label: "Google Drive", url: pv, play: pv });
+    }
   }
   (ep.servers || []).forEach((srv, i) => {
     const u = (srv.url || "").trim();
@@ -2315,13 +2644,269 @@ function epDownloads(ep) {
   return url ? [{ label: "Google Drive", url }] : [];
 }
 
-function loadSource(url, forceVideo) {
+const ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>';
+const ICON_VOL = '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+const ICON_MUTE = '<svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>';
+const ICON_REW10 = '<svg viewBox="0 0 24 24"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/><text x="12" y="15.5" text-anchor="middle" font-size="7.2" font-weight="800" font-family="sans-serif">10</text></svg>';
+const ICON_FWD10 = '<svg viewBox="0 0 24 24"><path d="M12.01 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/><text x="12" y="15.5" text-anchor="middle" font-size="7.2" font-weight="800" font-family="sans-serif">10</text></svg>';
+const ICON_FS = '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
+const ICON_FS_EXIT = '<svg viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>';
+
+function mountNetflixVideoPlayer(stage, opts) {
+  const titleText = (opts && opts.title) || "";
+  const corsAttr = (opts && opts.corsAnon) ? ' crossorigin="anonymous"' : "";
+  stage.innerHTML =
+    '<div class="nf-player" id="nf-player">' +
+      '<video id="vid"' + corsAttr + ' playsinline preload="metadata"></video>' +
+      '<div class="nfp-spinner" id="nfp-spin"></div>' +
+      '<div class="nfp-seek-toast left" id="nfp-toast-l">↺ 10 dtk</div>' +
+      '<div class="nfp-seek-toast right" id="nfp-toast-r">10 dtk ↻</div>' +
+      '<div class="nfp-ui" id="nfp-ui">' +
+        '<div class="nfp-top">' + esc(titleText) + '</div>' +
+        '<div class="nfp-center">' +
+          '<button type="button" class="nfp-cbtn" id="nfp-rew" aria-label="Mundur 10 detik">' + ICON_REW10 + '</button>' +
+          '<button type="button" class="nfp-cbtn play-main" id="nfp-cplay" aria-label="Putar / Jeda">' + ICON_PLAY + '</button>' +
+          '<button type="button" class="nfp-cbtn" id="nfp-fwd" aria-label="Maju 10 detik">' + ICON_FWD10 + '</button>' +
+        '</div>' +
+        '<div class="nfp-bottom">' +
+          '<div class="nfp-progress-wrap" id="nfp-prog" role="slider" aria-label="Timeline video">' +
+            '<div class="nfp-track">' +
+              '<div class="nfp-buf" id="nfp-buf"></div>' +
+              '<div class="nfp-fill" id="nfp-fill"></div>' +
+              '<div class="nfp-thumb" id="nfp-thumb"></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="nfp-bar">' +
+            '<div class="nfp-left">' +
+              '<button type="button" class="nfp-ibtn" id="nfp-play" aria-label="Putar / Jeda">' + ICON_PLAY + '</button>' +
+              '<button type="button" class="nfp-ibtn" id="nfp-mute" aria-label="Suara">' + ICON_VOL + '</button>' +
+              '<span class="nfp-time" id="nfp-time">0:00 / 0:00</span>' +
+            '</div>' +
+            '<div class="nfp-right">' +
+              '<button type="button" class="nfp-speed" id="nfp-speed" title="Kecepatan putar">1x</button>' +
+              '<button type="button" class="nfp-ibtn" id="nfp-fs" aria-label="Layar penuh">' + ICON_FS + '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  const root = $("#nf-player");
+  const v = $("#vid");
+  const spin = $("#nfp-spin");
+  const cplay = $("#nfp-cplay");
+  const bplay = $("#nfp-play");
+  const bmute = $("#nfp-mute");
+  const timeEl = $("#nfp-time");
+  const prog = $("#nfp-prog");
+  const bufEl = $("#nfp-buf");
+  const fillEl = $("#nfp-fill");
+  const thumbEl = $("#nfp-thumb");
+  const speedBtn = $("#nfp-speed");
+  const fsBtn = $("#nfp-fs");
+  const toastL = $("#nfp-toast-l");
+  const toastR = $("#nfp-toast-r");
+
+  const speeds = [1, 1.25, 1.5, 2, 0.75];
+  let speedIdx = 0;
+  let dragging = false;
+  let toastTimer = null;
+
+  function wakeControls() {
+    root.classList.remove("idle");
+    if (nfpIdleTimer) clearTimeout(nfpIdleTimer);
+    if (!v.paused && !dragging) {
+      nfpIdleTimer = setTimeout(() => {
+        if (!v.paused && !dragging) root.classList.add("idle");
+      }, 2700);
+    }
+  }
+
+  function syncPlayIcons() {
+    const ic = v.paused ? ICON_PLAY : ICON_PAUSE;
+    cplay.innerHTML = ic;
+    bplay.innerHTML = ic;
+    if (v.paused) {
+      if (nfpIdleTimer) clearTimeout(nfpIdleTimer);
+      root.classList.remove("idle");
+    } else {
+      wakeControls();
+    }
+  }
+
+  function togglePlay() {
+    if (v.paused) {
+      const p = v.play();
+      if (p && p.catch) p.catch(() => {});
+    } else {
+      v.pause();
+    }
+  }
+
+  function flashSeek(dir) {
+    const el = dir < 0 ? toastL : toastR;
+    el.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toastL.classList.remove("show"); toastR.classList.remove("show"); }, 550);
+  }
+
+  function skipBy(delta) {
+    if (!Number.isFinite(v.duration)) return;
+    v.currentTime = Math.max(0, Math.min(v.duration, (v.currentTime || 0) + delta));
+    flashSeek(delta);
+    wakeControls();
+  }
+
+  function updateTimeline() {
+    const dur = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : 0;
+    const cur = v.currentTime || 0;
+    const pct = dur ? Math.min(100, Math.max(0, (cur / dur) * 100)) : 0;
+    fillEl.style.width = pct + "%";
+    thumbEl.style.left = pct + "%";
+    timeEl.textContent = fmtClock(cur) + " / " + (dur ? fmtClock(dur) : "--:--");
+    if (dur && v.buffered && v.buffered.length) {
+      const bEnd = v.buffered.end(v.buffered.length - 1);
+      bufEl.style.width = Math.min(100, (bEnd / dur) * 100) + "%";
+    }
+  }
+
+  function toggleFullscreen() {
+    const doc = document;
+    const fsEl = doc.fullscreenElement || doc.webkitFullscreenElement;
+    if (fsEl) {
+      if (doc.exitFullscreen) doc.exitFullscreen().catch(() => {});
+      else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+      if (screen.orientation && screen.orientation.unlock) { try { screen.orientation.unlock(); } catch (e) {} }
+    } else if (root.requestFullscreen) {
+      root.requestFullscreen().then(() => {
+        if (screen.orientation && screen.orientation.lock) { screen.orientation.lock("landscape").catch(() => {}); }
+      }).catch(() => {});
+    } else if (root.webkitRequestFullscreen) {
+      root.webkitRequestFullscreen();
+    } else if (v.webkitEnterFullscreen) {
+      v.webkitEnterFullscreen();
+    }
+    wakeControls();
+  }
+
+  v.addEventListener("loadedmetadata", () => { spin.hidden = true; updateTimeline(); });
+  v.addEventListener("canplay", () => { spin.hidden = true; });
+  v.addEventListener("playing", () => { spin.hidden = true; syncPlayIcons(); });
+  v.addEventListener("waiting", () => { spin.hidden = false; });
+  v.addEventListener("play", syncPlayIcons);
+  v.addEventListener("pause", syncPlayIcons);
+  v.addEventListener("timeupdate", () => { if (!dragging) updateTimeline(); });
+  v.addEventListener("progress", updateTimeline);
+  v.addEventListener("volumechange", () => {
+    bmute.innerHTML = (v.muted || v.volume === 0) ? ICON_MUTE : ICON_VOL;
+  });
+
+  document.addEventListener("fullscreenchange", () => {
+    if (!$("#nfp-fs")) return;
+    fsBtn.innerHTML = document.fullscreenElement ? ICON_FS_EXIT : ICON_FS;
+  });
+
+  cplay.addEventListener("click", (e) => { e.stopPropagation(); togglePlay(); });
+  bplay.addEventListener("click", (e) => { e.stopPropagation(); togglePlay(); });
+  $("#nfp-rew").addEventListener("click", (e) => { e.stopPropagation(); skipBy(-10); });
+  $("#nfp-fwd").addEventListener("click", (e) => { e.stopPropagation(); skipBy(10); });
+  bmute.addEventListener("click", (e) => { e.stopPropagation(); v.muted = !v.muted; wakeControls(); });
+  speedBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    speedIdx = (speedIdx + 1) % speeds.length;
+    v.playbackRate = speeds[speedIdx];
+    speedBtn.textContent = speeds[speedIdx] + "x";
+    wakeControls();
+  });
+  fsBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleFullscreen(); });
+
+  function seekFromPointer(ev) {
+    const rect = prog.getBoundingClientRect();
+    if (!rect.width || !Number.isFinite(v.duration) || v.duration <= 0) return;
+    const ratio = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+    v.currentTime = ratio * v.duration;
+    updateTimeline();
+  }
+  prog.addEventListener("pointerdown", (ev) => {
+    ev.stopPropagation();
+    dragging = true;
+    try { prog.setPointerCapture(ev.pointerId); } catch (e) {}
+    seekFromPointer(ev);
+    wakeControls();
+  });
+  prog.addEventListener("pointermove", (ev) => {
+    if (!dragging) return;
+    seekFromPointer(ev);
+  });
+  const endDrag = (ev) => {
+    if (!dragging) return;
+    dragging = false;
+    try { prog.releasePointerCapture(ev.pointerId); } catch (e) {}
+    wakeControls();
+  };
+  prog.addEventListener("pointerup", endDrag);
+  prog.addEventListener("pointercancel", endDrag);
+
+  // Touch tap-to-toggle UI + double-tap seek, Mouse click-to-play + dblclick fullscreen
+  let lastTapTs = 0;
+  let lastTapSide = 0;
+  root.addEventListener(window.PointerEvent ? "pointermove" : "mousemove", (ev) => {
+    if (ev.pointerType === "mouse" || !ev.pointerType) wakeControls();
+  });
+  root.addEventListener("pointerup", (ev) => {
+    if (ev.target.closest("button, .nfp-progress-wrap")) return;
+    if (ev.pointerType === "touch") {
+      const now = Date.now();
+      const rect = root.getBoundingClientRect();
+      const relX = (ev.clientX - rect.left) / Math.max(1, rect.width);
+      const side = relX < 0.35 ? -1 : relX > 0.65 ? 1 : 0;
+      if (side !== 0 && now - lastTapTs < 320 && side === lastTapSide) {
+        skipBy(side * 10);
+        lastTapTs = 0;
+        return;
+      }
+      lastTapTs = now;
+      lastTapSide = side;
+      if (root.classList.contains("idle")) wakeControls();
+      else if (!v.paused) root.classList.add("idle");
+    } else {
+      togglePlay();
+    }
+  });
+  root.addEventListener("dblclick", (ev) => {
+    if (ev.target.closest("button, .nfp-progress-wrap")) return;
+    toggleFullscreen();
+  });
+
+  nfpKeyHandler = (ev) => {
+    if ($("#view-watch").hidden) return;
+    const tag = (ev.target && ev.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (ev.key === " " || ev.key === "k") { ev.preventDefault(); togglePlay(); }
+    else if (ev.key === "ArrowLeft" || ev.key === "j") { ev.preventDefault(); skipBy(-10); }
+    else if (ev.key === "ArrowRight" || ev.key === "l") { ev.preventDefault(); skipBy(10); }
+    else if (ev.key === "f") { ev.preventDefault(); toggleFullscreen(); }
+    else if (ev.key === "m") { ev.preventDefault(); v.muted = !v.muted; wakeControls(); }
+  };
+  document.addEventListener("keydown", nfpKeyHandler);
+
+  return v;
+}
+
+function loadSource(url, forceVideo, opts) {
   destroyPlayer();
   const stage = $("#stage");
   const errBox = $("#src-err");
   if (errBox) { errBox.style.display = "none"; errBox.textContent = ""; }
   const clean = (url || "").trim();
-  if (stage) stage.classList.toggle("stage-page", /file\.kiwi/i.test(clean));
+  const isDriveEmbed = /(?:drive|docs)\.google\.com\/file\/d\//i.test(clean);
+  const isMegaEmbed = /(?:mega\.nz|mega\.co\.nz)\//i.test(clean);
+  const needsSmartScale = !forceVideo && (isDriveEmbed || isMegaEmbed);
+  if (stage) {
+    stage.classList.toggle("stage-page", /file\.kiwi/i.test(clean));
+    stage.classList.toggle("stage-drive", !forceVideo && isDriveEmbed);
+  }
   if (!clean) {
     stage.innerHTML =
       '<div class="player-empty">' +
@@ -2332,11 +2917,149 @@ function loadSource(url, forceVideo) {
     return;
   }
   if (!forceVideo && isEmbedUrl(clean)) {
-    stage.innerHTML = '<iframe src="' + esc(embedUrl(clean)) + '" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture" title="Video player"></iframe>';
+    stage.innerHTML =
+      '<iframe id="embed-frame" src="' + esc(embedUrl(clean)) + '" allowfullscreen allow="autoplay; fullscreen; encrypted-media; picture-in-picture" title="Video player"></iframe>' +
+      (needsSmartScale ? '<button type="button" class="drive-fs-hit" id="drive-fs-hit" aria-label="Layar penuh" hidden></button>' : '');
+    if (needsSmartScale && stage) {
+      const frame = $("#embed-frame", stage);
+      const fsHit = $("#drive-fs-hit", stage);
+      const shell = stage.closest(".player-shell") || stage;
+      const canShellFs = !!(shell && (shell.requestFullscreen || shell.webkitRequestFullscreen));
+      // Drive needs internal height > 480px (504px) on touch screens to avoid broken landscape-phone CSS.
+      // MEGA needs internal width >= 508px (560px) so its left Play/Pause & Mute buttons don't overflow left (x < 0).
+      const DRIVE_TARGET_H = 504;
+      const MEGA_TARGET_W = 560;
+
+      if (fsHit && canShellFs) {
+        fsHit.addEventListener("click", (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const curFs = document.fullscreenElement || document.webkitFullscreenElement;
+          if (curFs) {
+            if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            if (screen.orientation && screen.orientation.unlock) { try { screen.orientation.unlock(); } catch (e) {} }
+          } else {
+            const p = shell.requestFullscreen ? shell.requestFullscreen() : shell.webkitRequestFullscreen();
+            if (p && p.then) {
+              p.then(() => {
+                if (screen.orientation && screen.orientation.lock) {
+                  screen.orientation.lock("landscape").catch(() => {});
+                }
+              }).catch(() => {});
+            } else if (screen.orientation && screen.orientation.lock) {
+              screen.orientation.lock("landscape").catch(() => {});
+            }
+          }
+        });
+      }
+
+      const fitEmbedFrame = () => {
+        if (!frame || !stage.isConnected) return;
+        const isTouch = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+        const curFs = document.fullscreenElement || document.webkitFullscreenElement;
+        const frameIsFs = curFs === frame;
+        const r = stage.getBoundingClientRect();
+
+        if (isDriveEmbed) {
+          const useScale = !frameIsFs && (isTouch || window.innerWidth <= 680) && r.height > 0 && r.height < DRIVE_TARGET_H;
+          if (useScale) {
+            const s = r.height / DRIVE_TARGET_H;
+            frame.style.inset = "auto";
+            frame.style.top = "0";
+            frame.style.left = "0";
+            frame.style.width = (r.width / s).toFixed(2) + "px";
+            frame.style.height = DRIVE_TARGET_H + "px";
+            frame.style.transform = "scale(" + s.toFixed(5) + ")";
+            frame.style.transformOrigin = "top left";
+            if (fsHit && canShellFs) {
+              fsHit.hidden = false;
+              fsHit.style.right = Math.round(8 * s) + "px";
+              fsHit.style.bottom = Math.round(6 * s) + "px";
+              fsHit.style.width = Math.round(76 * s) + "px";
+              fsHit.style.height = Math.round(70 * s) + "px";
+            }
+          } else {
+            frame.style.inset = "0";
+            frame.style.width = "100%";
+            frame.style.height = "100%";
+            frame.style.transform = "";
+            frame.style.transformOrigin = "";
+            if (fsHit) {
+              if (isTouch && canShellFs && !frameIsFs) {
+                fsHit.hidden = false;
+                fsHit.style.right = "8px";
+                fsHit.style.bottom = "6px";
+                fsHit.style.width = "76px";
+                fsHit.style.height = "70px";
+              } else {
+                fsHit.hidden = true;
+              }
+            }
+          }
+        } else if (isMegaEmbed) {
+          const useScale = !frameIsFs && r.width > 0 && r.width < MEGA_TARGET_W;
+          if (useScale) {
+            const s = r.width / MEGA_TARGET_W;
+            frame.style.inset = "auto";
+            frame.style.top = "0";
+            frame.style.left = "0";
+            frame.style.width = MEGA_TARGET_W + "px";
+            frame.style.height = (r.height / s).toFixed(2) + "px";
+            frame.style.transform = "scale(" + s.toFixed(5) + ")";
+            frame.style.transformOrigin = "top left";
+            if (fsHit && canShellFs && isTouch) {
+              fsHit.hidden = false;
+              fsHit.style.right = Math.round(6 * s) + "px";
+              fsHit.style.bottom = Math.round(4 * s) + "px";
+              fsHit.style.width = Math.round(54 * s) + "px";
+              fsHit.style.height = Math.round(46 * s) + "px";
+            } else if (fsHit) {
+              fsHit.hidden = true;
+            }
+          } else {
+            frame.style.inset = "0";
+            frame.style.width = "100%";
+            frame.style.height = "100%";
+            frame.style.transform = "";
+            frame.style.transformOrigin = "";
+            if (fsHit) {
+              if (isTouch && canShellFs && !frameIsFs) {
+                fsHit.hidden = false;
+                fsHit.style.right = "6px";
+                fsHit.style.bottom = "4px";
+                fsHit.style.width = "54px";
+                fsHit.style.height = "46px";
+              } else {
+                fsHit.hidden = true;
+              }
+            }
+          }
+        }
+      };
+
+      fitEmbedFrame();
+      driveFsHandler = () => {
+        const curFs = document.fullscreenElement || document.webkitFullscreenElement;
+        if (curFs === frame && screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock("landscape").catch(() => {});
+        } else if (!curFs && screen.orientation && screen.orientation.unlock) {
+          try { screen.orientation.unlock(); } catch (e) {}
+        }
+        fitEmbedFrame();
+        setTimeout(fitEmbedFrame, 120);
+        setTimeout(fitEmbedFrame, 350);
+      };
+      document.addEventListener("fullscreenchange", driveFsHandler);
+      document.addEventListener("webkitfullscreenchange", driveFsHandler);
+      if (window.ResizeObserver) {
+        driveResizeObs = new ResizeObserver(fitEmbedFrame);
+        driveResizeObs.observe(stage);
+      }
+    }
     return;
   }
-  stage.innerHTML = '<video id="vid" controls playsinline preload="metadata"></video>';
-  const v = $("#vid");
+  const v = mountNetflixVideoPlayer(stage, opts || {});
   v.addEventListener("error", () => {
     if (!v.error) return;
     let handled = false;
@@ -2390,6 +3113,7 @@ function renderWatch(slug, n) {
   const sources = epSources(ep);
   const dls = epDownloads(ep);
   const defIdx = 0;
+  const epFullTitle = a.title + " — Ep " + ep.n + (ep.title ? ": " + ep.title : "");
 
   view.innerHTML =
     '<div class="watch-stage">' +
@@ -2405,9 +3129,9 @@ function renderWatch(slug, n) {
             '<p class="watch-sub">' + (ep.title ? esc(ep.title) + ' · ' : '') + 'Rilis ' + fmtDate(ep.date) + '</p>' +
           '</div>' +
           '<div class="ep-nav-row" style="margin:0">' +
-            (prev ? '<button type="button" class="ep-nav-btn" data-watch="' + esc(a.slug) + '/' + prev.n + '">← Ep ' + prev.n + '</button>' : '<button type="button" class="ep-nav-btn" disabled>← Sebelumnya</button>') +
-            (next ? '<button type="button" class="ep-nav-btn primary-next" data-watch="' + esc(a.slug) + '/' + next.n + '">Ep Berikutnya (' + next.n + ') ▶</button>' : '<button type="button" class="ep-nav-btn" disabled>Ep Terakhir</button>') +
-            '<button type="button" class="ep-nav-btn" data-goto-anime="' + esc(a.slug) + '">Semua Episode</button>' +
+            (prev ? '<button type="button" class="ep-nav-btn" data-watch="' + esc(a.slug) + '/' + prev.n + '">← Ep ' + prev.n + '</button>' : '<button type="button" class="ep-nav-btn" disabled>← Awal</button>') +
+            '<button type="button" class="ep-nav-btn" data-goto-anime="' + esc(a.slug) + '">☰ Episode</button>' +
+            (next ? '<button type="button" class="ep-nav-btn primary-next" data-watch="' + esc(a.slug) + '/' + next.n + '">Ep ' + next.n + ' ▶</button>' : '<button type="button" class="ep-nav-btn" disabled>Tamat</button>') +
           '</div>' +
         '</div>' +
         '<p class="err-banner" id="src-err"></p>' +
@@ -2415,31 +3139,40 @@ function renderWatch(slug, n) {
           (sources.length
             ? '<span class="bar-label">Server:</span>' + sources.map((s, i) => '<button type="button" class="srv-btn' + (i === defIdx ? ' active' : '') + '" data-srv="' + i + '">' + esc(s.label) + '</button>').join("")
             : '<span class="bar-label">Server: Belum tersedia</span>') +
-          (dls.length
-            ? '<span class="bar-label" style="margin-left:8px">Unduh:</span>' + dls.map((d) => '<a class="dl-btn" href="' + esc(d.url) + '" target="_blank" rel="noopener">⬇ ' + esc(d.label) + '</a>').join("")
-            : '') +
-          '<a class="report-btn" data-wa-report="1" href="https://wa.me/' + WA_REPORT_NUMBER + '" target="_blank" rel="noopener">⚠ Lapor Link Error</a>' +
+          '<div class="bar-actions">' +
+            dls.map((d) => '<a class="dl-btn" href="' + esc(d.url) + '" target="_blank" rel="noopener">⬇ Unduh Video</a>').join("") +
+            '<a class="report-btn" data-wa-report="1" href="https://wa.me/' + WA_REPORT_NUMBER + '" target="_blank" rel="noopener">⚠ Lapor Error</a>' +
+          '</div>' +
         '</div>' +
       '</div>' +
       '<div class="ep-toolbar"><h2>Daftar Episode (' + a.episodes.length + ')</h2></div>' +
       renderEpisodeItemsHtml(a, a.episodes, ep.n) +
     '</div>';
 
+  function activateSource(sObj) {
+    if (!sObj) { loadSource("", false, { title: epFullTitle }); return; }
+    videoErrorHook = sObj.fallbackEmbed
+      ? () => { videoErrorHook = null; loadSource(sObj.fallbackEmbed, false, { title: epFullTitle }); return true; }
+      : null;
+    loadSource(sObj.play || sObj.url, !!sObj.forceVideo, {
+      title: epFullTitle,
+      corsAnon: !!sObj.corsAnon
+    });
+  }
+
   let curSrv = defIdx;
   const srvRow = $("#srv-row");
-  videoErrorHook = null;
   if (srvRow && sources.length > 1) {
     srvRow.addEventListener("click", (ev) => {
       const b = ev.target.closest("[data-srv]");
       if (!b) return;
       curSrv = parseInt(b.dataset.srv, 10);
       srvRow.querySelectorAll("[data-srv]").forEach((x, xi) => x.classList.toggle("active", xi === curSrv));
-      const s2 = sources[curSrv];
-      loadSource(s2.play || s2.url);
+      activateSource(sources[curSrv]);
       refreshWaLinks();
     });
   }
-  loadSource(sources.length ? (sources[defIdx].play || sources[defIdx].url) : "");
+  activateSource(sources[defIdx] || null);
   if (!sources.length && dls.length) {
     const e2 = $("#src-err");
     if (e2) {
